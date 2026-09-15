@@ -64,7 +64,15 @@ python servo_regs.py scan --no-dump       # just report which IDs answered
 python servo_regs.py dump --port /dev/cu.usbmodemXXXX --baud 1000000 --id 1
 python servo_regs.py dump ... --diagnostic   # key registers only
 
-# 3. Write a single register, with read-back verification
+# 3. Health-check a servo: link quality, voltage, temperature, fault flags
+python servo_regs.py test --port /dev/cu.usbmodemXXXX --baud 1000000 --id 1
+python servo_regs.py test ... --move -200      # also verify it physically moves
+
+# 4. Record a joint's range of motion by hand and write position limits
+python servo_regs.py range --port /dev/cu.usbmodemXXXX --baud 1000000 --id 1
+python servo_regs.py range ... --offset 50     # keep 50 steps inside each end
+
+# 5. Write a single register, with read-back verification
 python servo_regs.py set --port /dev/cu.usbmodemXXXX --baud 1000000 --id 1 \
     --reg Maximum_Acceleration --value 254
 ```
@@ -111,6 +119,35 @@ python servo_regs.py set --port /dev/cu.usbmodemXXXX --baud 1000000 --id 1 \
     --reg ID --value 3
 ```
 
+### Setting position limits (`range`)
+
+`range` disables torque, streams `Present_Position` while you move the joint by
+hand to both mechanical ends, then proposes `Min_Position_Limit` (address 9) =
+recorded min + `--offset` and `Max_Position_Limit` (address 11) = recorded max −
+`--offset` (default 20 steps). A recorded range of 1–100 becomes limits 21–80. It
+asks before writing (`--yes` skips the prompt), verifies both writes, and leaves
+torque disabled.
+
+It refuses to write if the joint's travel crossed the 4095↔0 seam, since that range
+cannot be expressed as Min < Max; re-centre the joint first. It also refuses if the
+offset would leave no range. Running `lerobot-calibrate` afterwards overwrites these
+limits with its own.
+
+### Re-centring a servo (`Torque_Enable = 128`)
+
+Writing `128` to `Torque_Enable` (address 40) is not a torque state. It tells the
+servo to treat its current position as the centre (2048) by rewriting
+`Homing_Offset`. `set` recognises it, unlocks around the command, and verifies it by
+reading `Present_Position` afterwards rather than address 40:
+
+```bash
+python servo_regs.py set --port /dev/cu.usbmodemXXXX --baud 1000000 --id 6 \
+    --reg Torque_Enable --value 128
+```
+
+Afterwards, power-cycle and `dump` to confirm the new `Homing_Offset` was kept. Any
+existing lerobot calibration for that motor is stale and must be redone.
+
 | Addr | Register                    | Notes                                        |
 | ---- | --------------------------- | -------------------------------------------- |
 | 80   | `Moving_Velocity_Threshold` |                                              |
@@ -133,9 +170,20 @@ python servo_regs.py set --port /dev/cu.usbmodemXXXX --baud 1000000 --id 1 \
 adapter, or driver problem. No servo register can cause this. On macOS a CH340
 adapter appears as `/dev/cu.usbmodem*` or `/dev/cu.usbserial-*`.
 
-**A port exists but nothing answers.** Check that the servo has its own power
-supply; USB alone will not drive the bus, and an unpowered servo is
-indistinguishable from a dead one. Then retry with `--full` in case the ID moved.
+**A port exists but nothing answers.** Measure the supply voltage at the servo
+before suspecting the servo itself. "Power is on" is not enough - the voltage has
+to be in range, and both directions fail silently:
+
+- **Too high** (e.g. a USB-C PD charger negotiating 20 V) trips the servo's
+  overvoltage protection. It powers up and looks alive but will not transmit a
+  single byte at any baud rate - identical to a dead servo from the host side.
+- **Too low** (e.g. USB's default 5 V rail when PD does not negotiate up) lets
+  the MCU boot and answer pings, but leaves no torque to drive the motor.
+
+An STS3215 wants **12 V**; `Max_Voltage_Limit` is 14.0 V. Once any servo does
+answer, `test` reports the measured voltage against the servo's own limits.
+
+Then retry with `--full` in case the ID moved.
 
 ### Provenance
 
