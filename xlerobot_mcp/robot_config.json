@@ -1,0 +1,2343 @@
+{
+  "note": "User Terminal observations on 2026-10-09: all 14 positional servos fault-free at 12.0\u201312.1V, torque0, goal0. Left IDs2/3 and right IDs2/3 outside limits; right ID5 full-range limits need review. No joints commissioned; fresh reads required.",
+  "groups": {
+    "left-arm": {
+      "port": "/dev/cu.usbmodem5B610369561",
+      "port_verified": true,
+      "joints": {
+        "1": {
+          "name": "left_right_yaw",
+          "commissioned": false,
+          "safe_raw_limits": [
+            776,
+            3132
+          ],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_position": 1908,
+          "observed_raw_limits": [
+            776,
+            3132
+          ],
+          "last_observed_state": {
+            "model": 777,
+            "min": 776,
+            "max": 3132,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 121,
+            "temperature_raw": 31,
+            "torque": 1,
+            "goal": 1907,
+            "position": 1908,
+            "moving": 0,
+            "max_torque_raw": 1000,
+            "phase_raw": 12,
+            "position_p_raw": 32,
+            "position_d_raw": 32,
+            "position_i_raw": 0,
+            "starting_torque_raw": 16,
+            "dead_zone_positive_raw": 1,
+            "dead_zone_negative_raw": 1,
+            "angle_resolution_raw": 1,
+            "acceleration_raw": 0,
+            "running_speed_raw": 100,
+            "torque_limit_raw": 1000,
+            "present_speed_raw": 0,
+            "present_load_raw": 0,
+            "servo_status_raw": 0,
+            "motor_phase_current_raw": 0
+          },
+          "fault_bits": [],
+          "last_observed_unix": 1792800221.199161,
+          "mapping_source": "Operator clarified2026-10-16: +80tick motion moved left from their own viewpoint while gripper faced them; four-leg sequence smooth without collision. Supersedes prior robot-relative-left assumption.",
+          "positive_raw_direction": "observer-left when observer faces gripper tip",
+          "direction_reference": "Operator viewpoint, gripper facing operator. Robot-relative left/right unverified.",
+          "clearance_verified_window": {
+            "date": "2026-10-16",
+            "tested_center_raw": 1906,
+            "tested_goal_endpoints_raw": [
+              1826,
+              1986
+            ],
+            "observed_endpoint_positions_raw": [
+              1828,
+              1984
+            ],
+            "conservative_interior_raw": [
+              1836,
+              1976
+            ],
+            "interior_margin_ticks": 8,
+            "other_joints_pose_raw": {
+              "2": 1301,
+              "3": 1809,
+              "4": 2171,
+              "5": 2170,
+              "6": 2019
+            },
+            "scope": "Only observed with other joints held at this supported empty-arm pose. Not a multi-joint collision envelope or generic motion enable.",
+            "ordinary_motion_enabled": false
+          }
+        },
+        "2": {
+          "name": "shoulder_lift",
+          "commissioned": false,
+          "safe_raw_limits": [
+            822,
+            3132
+          ],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_position": 1149,
+          "observed_raw_limits": [
+            822,
+            3132
+          ],
+          "last_observed_state": {
+            "model": 777,
+            "min": 822,
+            "max": 3132,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 120,
+            "temperature_raw": 31,
+            "torque": 1,
+            "goal": 1148,
+            "position": 1149,
+            "moving": 0,
+            "max_torque_raw": 1000,
+            "phase_raw": 12,
+            "position_p_raw": 32,
+            "position_d_raw": 32,
+            "position_i_raw": 0,
+            "starting_torque_raw": 16,
+            "dead_zone_positive_raw": 1,
+            "dead_zone_negative_raw": 1,
+            "angle_resolution_raw": 1,
+            "acceleration_raw": 0,
+            "running_speed_raw": 100,
+            "torque_limit_raw": 1000,
+            "present_speed_raw": 0,
+            "present_load_raw": 0,
+            "servo_status_raw": 0,
+            "motor_phase_current_raw": 0
+          },
+          "fault_bits": [],
+          "last_observed_unix": 1792800221.199161,
+          "mapping_source": "Operator witnessed smooth +32-tick trial and return on2026-10-16; increasing ticks lifted shoulder upward.",
+          "positive_raw_direction": "upward",
+          "latest_endpoint_direction_observation": {
+            "request_id": "0bc094af-3dc1-45ac-aaa5-ce09a067bef1",
+            "shoulder_direction": "upward",
+            "gripper_endpoint_path": "forward and slightly downward in observed pose",
+            "mapping_conflict_resolved": true,
+            "joint_motion_is_not_cartesian_gripper_motion": true,
+            "positive_ticks_shoulder_direction": "upward",
+            "endpoint_path_pose_specific": true,
+            "straight_vertical_gripper_motion_verified": false,
+            "recorded_unix": 1792810910.8307579
+          }
+        },
+        "3": {
+          "name": "probable_elbow_flex",
+          "commissioned": false,
+          "safe_raw_limits": [
+            650,
+            2804
+          ],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_position": 2558,
+          "observed_raw_limits": [
+            650,
+            2804
+          ],
+          "last_observed_state": {
+            "model": 777,
+            "min": 650,
+            "max": 2804,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 120,
+            "temperature_raw": 40,
+            "torque": 1,
+            "goal": 2553,
+            "position": 2558,
+            "moving": 0,
+            "max_torque_raw": 1000,
+            "phase_raw": 12,
+            "position_p_raw": 32,
+            "position_d_raw": 32,
+            "position_i_raw": 0,
+            "starting_torque_raw": 16,
+            "dead_zone_positive_raw": 1,
+            "dead_zone_negative_raw": 1,
+            "angle_resolution_raw": 1,
+            "acceleration_raw": 0,
+            "running_speed_raw": 100,
+            "torque_limit_raw": 1000,
+            "present_speed_raw": 0,
+            "present_load_raw": 48,
+            "servo_status_raw": 0,
+            "motor_phase_current_raw": 1
+          },
+          "fault_bits": [],
+          "last_observed_unix": 1792805726.1461709,
+          "mapping_source": "Operator thinks ID3 is elbow flex and witnessed smooth downward arm movement with +80ticks, then smooth return on2026-10-16. Anatomical mapping provisional.",
+          "positive_raw_direction": "arm downward (operator observed)"
+        },
+        "4": {
+          "name": "wrist_flex",
+          "commissioned": false,
+          "safe_raw_limits": [
+            930,
+            3147
+          ],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_position": 2179,
+          "observed_raw_limits": [
+            930,
+            3147
+          ],
+          "last_observed_state": {
+            "model": 777,
+            "min": 930,
+            "max": 3147,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 120,
+            "temperature_raw": 32,
+            "torque": 1,
+            "goal": 2178,
+            "position": 2179,
+            "moving": 0,
+            "max_torque_raw": 1000,
+            "phase_raw": 12,
+            "position_p_raw": 32,
+            "position_d_raw": 32,
+            "position_i_raw": 0,
+            "starting_torque_raw": 16,
+            "dead_zone_positive_raw": 1,
+            "dead_zone_negative_raw": 1,
+            "angle_resolution_raw": 1,
+            "acceleration_raw": 0,
+            "running_speed_raw": 100,
+            "torque_limit_raw": 1000,
+            "present_speed_raw": 0,
+            "present_load_raw": 0,
+            "servo_status_raw": 0,
+            "motor_phase_current_raw": 0
+          },
+          "fault_bits": [],
+          "last_observed_unix": 1792800221.199161,
+          "mapping_source": "Operator witnessed smooth wrist downward flex with +32ticks and smooth return on2026-10-16.",
+          "positive_raw_direction": "downward wrist flex",
+          "small_supported_clearance_test": {
+            "date": "2026-10-23",
+            "center_raw": 2178,
+            "goal_endpoints_raw": [
+              2098,
+              2258
+            ],
+            "observed_endpoints_raw": [
+              2102,
+              2257
+            ],
+            "operator_observation": "Smooth",
+            "scope": "Single-joint test with other joints held in recorded pose, empty supported arm; not a multi-joint collision envelope.",
+            "generic_motion_enabled": false
+          }
+        },
+        "5": {
+          "name": "wrist_roll",
+          "commissioned": false,
+          "safe_raw_limits": [
+            488,
+            3774
+          ],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_position": 2170,
+          "observed_raw_limits": [
+            488,
+            3774
+          ],
+          "last_observed_state": {
+            "model": 777,
+            "min": 488,
+            "max": 3774,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 120,
+            "temperature_raw": 30,
+            "torque": 1,
+            "goal": 2170,
+            "position": 2170,
+            "moving": 0,
+            "max_torque_raw": 1000,
+            "phase_raw": 12,
+            "position_p_raw": 32,
+            "position_d_raw": 32,
+            "position_i_raw": 0,
+            "starting_torque_raw": 16,
+            "dead_zone_positive_raw": 1,
+            "dead_zone_negative_raw": 1,
+            "angle_resolution_raw": 1,
+            "acceleration_raw": 0,
+            "running_speed_raw": 100,
+            "torque_limit_raw": 1000,
+            "present_speed_raw": 0,
+            "present_load_raw": 0,
+            "servo_status_raw": 0,
+            "motor_phase_current_raw": 0
+          },
+          "fault_bits": [],
+          "last_observed_unix": 1792800221.199161,
+          "mapping_source": "Operator saw clockwise wrist roll with increasing ticks, then return, looking from gripper tip toward arm on2026-10-16.",
+          "positive_raw_direction": "clockwise viewed from gripper tip toward arm",
+          "small_supported_clearance_test": {
+            "date": "2026-10-23",
+            "center_raw": 2170,
+            "goal_endpoints_raw": [
+              2090,
+              2250
+            ],
+            "observed_endpoints_raw": [
+              2092,
+              2248
+            ],
+            "operator_observation": "Smooth",
+            "viewpoint": "gripper tip toward arm",
+            "scope": "One supported fixed-pose single-joint test; not a multi-joint collision envelope.",
+            "generic_motion_enabled": false
+          }
+        },
+        "6": {
+          "name": "gripper",
+          "commissioned": false,
+          "safe_raw_limits": [
+            1453,
+            2808
+          ],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_position": 2017,
+          "observed_raw_limits": [
+            1453,
+            2808
+          ],
+          "last_observed_state": {
+            "model": 777,
+            "min": 1453,
+            "max": 2808,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 120,
+            "temperature_raw": 32,
+            "torque": 1,
+            "goal": 2018,
+            "position": 2017,
+            "moving": 0,
+            "max_torque_raw": 1000,
+            "phase_raw": 12,
+            "position_p_raw": 32,
+            "position_d_raw": 32,
+            "position_i_raw": 0,
+            "starting_torque_raw": 16,
+            "dead_zone_positive_raw": 1,
+            "dead_zone_negative_raw": 1,
+            "angle_resolution_raw": 1,
+            "acceleration_raw": 0,
+            "running_speed_raw": 100,
+            "torque_limit_raw": 1000,
+            "present_speed_raw": 0,
+            "present_load_raw": 0,
+            "servo_status_raw": 0,
+            "motor_phase_current_raw": 0
+          },
+          "fault_bits": [],
+          "last_observed_unix": 1792800221.199161,
+          "mapping_source": "Operator witnessed smooth opening (upper jaw moved up) with +32ticks and smooth return on2026-10-16.",
+          "positive_raw_direction": "opens wider; upper jaw moves up",
+          "small_supported_clearance_test": {
+            "date": "2026-10-23",
+            "center_raw": 2018,
+            "goal_endpoints_raw": [
+              1938,
+              2098
+            ],
+            "observed_endpoints_raw": [
+              1939,
+              2096
+            ],
+            "operator_observation": "Smooth",
+            "scope": "Empty-gripper offsets only at fixed supported arm pose; no grasp-force or payload qualification.",
+            "generic_motion_enabled": false
+          }
+        }
+      },
+      "kinematic_calibration": {
+        "shoulder_pan": {
+          "id": 1,
+          "drive_mode": 0,
+          "homing_offset": -1758,
+          "range_min": 776,
+          "range_max": 3132
+        },
+        "shoulder_lift": {
+          "id": 2,
+          "drive_mode": 0,
+          "homing_offset": -730,
+          "range_min": 822,
+          "range_max": 3132
+        },
+        "elbow_flex": {
+          "id": 3,
+          "drive_mode": 0,
+          "homing_offset": -1585,
+          "range_min": 650,
+          "range_max": 2804
+        },
+        "wrist_flex": {
+          "id": 4,
+          "drive_mode": 0,
+          "homing_offset": 1324,
+          "range_min": 930,
+          "range_max": 3147
+        },
+        "wrist_roll": {
+          "id": 5,
+          "drive_mode": 0,
+          "homing_offset": -1341,
+          "range_min": 488,
+          "range_max": 3774
+        },
+        "gripper": {
+          "id": 6,
+          "drive_mode": 0,
+          "homing_offset": -1976,
+          "range_min": 1453,
+          "range_max": 2808
+        }
+      },
+      "kinematic_calibration_source": {
+        "method": "Live read-only ranges/homing/resolution; LeRobot midpoint degree convention",
+        "captured_unix": 1792811092.614897,
+        "model": "SO101/so101_new_calib.urdf",
+        "physical_metric_accuracy_verified": false,
+        "model_to_body_transform_verified": false
+      },
+      "gripper_up_observation": {
+        "request_id": "cce783e8-c8d6-4840-9c1f-52c83cba8f0f",
+        "operator_direction": "tiny downward movement",
+        "encoder_model_height_m": -0.0013686278006220104,
+        "completed": false,
+        "physically_qualified": false,
+        "recorded_unix": 1792811496.286988
+      }
+    },
+    "right-arm": {
+      "port": "/dev/cu.usbmodem5B610373751",
+      "port_verified": true,
+      "joints": {
+        "1": {
+          "name": "servo_1",
+          "commissioned": false,
+          "safe_raw_limits": [
+            1686,
+            2327
+          ],
+          "observed_raw_limits": [
+            1686,
+            2327
+          ],
+          "last_observed_position": 1752,
+          "last_observed_state": {
+            "model": 777,
+            "min": 1686,
+            "max": 2327,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 121,
+            "temperature_raw": 31,
+            "torque": 0,
+            "goal": 0,
+            "position": 1752,
+            "moving": 0
+          },
+          "fault_bits": [],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_unix": 1792205685.464231,
+          "right_arm_initial_trial": {
+            "request_id": "3b35b416-3236-412a-8124-88f869675f54",
+            "operator_confirmed_smooth": true,
+            "positive_direction": "observer-left when facing the gripper",
+            "robot_frame_direction_verified": false,
+            "clearance_verified": false,
+            "recorded_unix": 1792806885.57757
+          }
+        },
+        "2": {
+          "name": "servo_2",
+          "commissioned": false,
+          "safe_raw_limits": [
+            903,
+            3219
+          ],
+          "observed_raw_limits": [
+            903,
+            3219
+          ],
+          "last_observed_position": 897,
+          "last_observed_state": {
+            "model": 777,
+            "min": 903,
+            "max": 3219,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 120,
+            "temperature_raw": 31,
+            "torque": 0,
+            "goal": 0,
+            "position": 897,
+            "moving": 0
+          },
+          "fault_bits": [],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_unix": 1792205685.630026,
+          "right_arm_initial_trial": {
+            "request_id": "f5a89d34-1022-4e4c-85bb-18c0ff7315db",
+            "operator_confirmed_smooth": true,
+            "joint": "shoulder lift",
+            "positive_direction": "upward",
+            "return_error_ticks": 7,
+            "return_tolerance_ticks": 4,
+            "return_accuracy_passed": false,
+            "clearance_verified": false,
+            "recorded_unix": 1792806954.563112
+          }
+        },
+        "3": {
+          "name": "servo_3",
+          "commissioned": false,
+          "safe_raw_limits": [
+            950,
+            3049
+          ],
+          "observed_raw_limits": [
+            950,
+            3049
+          ],
+          "last_observed_position": 3062,
+          "last_observed_state": {
+            "model": 777,
+            "min": 950,
+            "max": 3049,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 120,
+            "temperature_raw": 31,
+            "torque": 0,
+            "goal": 0,
+            "position": 3062,
+            "moving": 0
+          },
+          "fault_bits": [],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_unix": 1792205685.814629,
+          "right_arm_initial_trial": {
+            "request_id": "e93e43d5-23ff-4189-9c2c-80a97d3a9b1d",
+            "positive_direction": "downward",
+            "joint_mapping": "provisional elbow flex",
+            "operator_return_observation": "little or no return",
+            "return_error_ticks_before_cleanup": 33,
+            "return_tolerance_ticks": 4,
+            "return_accuracy_passed": false,
+            "clearance_verified": false,
+            "recorded_unix": 1792807015.112997
+          },
+          "weight_support_comparison": {
+            "request_id": "c3fb9ea4-653f-42d4-83da-12f0c0622ca2",
+            "operator_return_observation": "small visible return",
+            "return_error_ticks_before_cleanup": 25,
+            "return_accuracy_passed": false,
+            "cause_established": false,
+            "motion_testing_paused_pending_review": true,
+            "recorded_unix": 1792807150.066783
+          },
+          "p16_baseline": {
+            "request_id": "6860fe50-bdc3-48ee-83dc-e356255a80b5",
+            "start_raw": 2969,
+            "reference_positions": {
+              "1": 1938,
+              "2": 1006,
+              "3": 2969,
+              "4": 2214,
+              "5": 1995,
+              "6": 1901
+            },
+            "return_error_ticks": 31,
+            "operator_confirmed_smooth_downward": true,
+            "operator_return_observation": "little or no return",
+            "passed": false,
+            "recorded_unix": 1792808423.407084
+          },
+          "p_comparison_status": {
+            "status": "stopped_by_user",
+            "p24_trial_run": false,
+            "original_p_raw": 16,
+            "right_arm_torque_off_confirmed": true,
+            "recorded_unix": 1792808545.713529
+          }
+        },
+        "4": {
+          "name": "servo_4",
+          "commissioned": false,
+          "safe_raw_limits": [
+            925,
+            3207
+          ],
+          "observed_raw_limits": [
+            925,
+            3207
+          ],
+          "last_observed_position": 2211,
+          "last_observed_state": {
+            "model": 777,
+            "min": 925,
+            "max": 3207,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 121,
+            "temperature_raw": 32,
+            "torque": 0,
+            "goal": 0,
+            "position": 2211,
+            "moving": 0
+          },
+          "fault_bits": [],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_unix": 1792205685.9929018,
+          "right_arm_initial_trial": {
+            "request_id": "00fd51fe-0ef6-4341-ac82-6f08ed71a9f4",
+            "operator_confirmed_smooth": true,
+            "joint": "wrist flex",
+            "positive_direction": "downward",
+            "return_error_ticks": 11,
+            "return_tolerance_ticks": 4,
+            "return_accuracy_passed": false,
+            "clearance_verified": false,
+            "recorded_unix": 1792807222.7986581
+          }
+        },
+        "5": {
+          "name": "servo_5",
+          "commissioned": false,
+          "safe_raw_limits": [
+            1928,
+            2008
+          ],
+          "observed_raw_limits": [
+            0,
+            4095
+          ],
+          "last_observed_position": 1969,
+          "last_observed_state": {
+            "model": 777,
+            "min": 0,
+            "max": 4095,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 120,
+            "temperature_raw": 31,
+            "torque": 0,
+            "goal": 0,
+            "position": 1969,
+            "moving": 0
+          },
+          "fault_bits": [],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "limits_review": "Operator approved provisional commissioning test window1928\u20132008 around1968; no collision-free qualification or ordinary motion approval.",
+          "last_observed_unix": 1792205686.17034,
+          "provisional_test_window": {
+            "limits": [
+              1928,
+              2008
+            ],
+            "center": 1968,
+            "approved_unix": 1792807481.333398,
+            "scope": "One +32tick trial and return; clearance and physical mapping pending",
+            "commissioned": false
+          },
+          "right_arm_initial_trial": {
+            "request_id": "1d8c6be2-d285-4e29-b7da-9197f59d8801",
+            "operator_confirmed_smooth": true,
+            "joint": "wrist roll",
+            "positive_direction": "clockwise viewed from gripper tip toward arm",
+            "outward_error_ticks": 5,
+            "tolerance_ticks": 4,
+            "initial_trial_passed": false,
+            "return_attempted": false,
+            "clearance_verified": false,
+            "recorded_unix": 1792807507.21793
+          },
+          "right_arm_coarse_trial": {
+            "request_id": "2b6d5a19-4ef8-46a4-a98c-9e2c25575d90",
+            "operator_confirmed_smooth": true,
+            "post_stop_twitch": false,
+            "outward_error_ticks": 5,
+            "return_error_ticks": 4,
+            "tolerance_ticks": 6,
+            "initial_trial_passed": true,
+            "direction": "negative",
+            "clearance_verified": false,
+            "recorded_unix": 1792807650.74909
+          }
+        },
+        "6": {
+          "name": "servo_6",
+          "commissioned": false,
+          "safe_raw_limits": [
+            1272,
+            2703
+          ],
+          "observed_raw_limits": [
+            1272,
+            2703
+          ],
+          "last_observed_position": 2313,
+          "last_observed_state": {
+            "model": 777,
+            "min": 1272,
+            "max": 2703,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 121,
+            "temperature_raw": 33,
+            "torque": 0,
+            "goal": 0,
+            "position": 2313,
+            "moving": 0
+          },
+          "fault_bits": [],
+          "limits_source": "User Terminal readback after reported manual calibration; not a collision-free envelope",
+          "last_observed_unix": 1792205686.347758,
+          "right_arm_initial_trial": {
+            "request_id": "6849a8b8-4dac-403f-aadc-642e949d4ecf",
+            "operator_confirmed_smooth": true,
+            "joint": "gripper",
+            "positive_direction": "opens wider",
+            "outward_error_ticks": 4,
+            "return_error_ticks": 3,
+            "tolerance_ticks": 4,
+            "initial_trial_passed": true,
+            "clearance_verified": false,
+            "recorded_unix": 1792807425.033521
+          }
+        }
+      },
+      "startup_recovery_observation": {
+        "request_id": "0e0b8c3b-7315-4517-89e5-fc38d0f956a8",
+        "entered_saved_range": true,
+        "settle_passed": false,
+        "position_raw": 3039,
+        "goal_raw": 3033,
+        "residual_ticks": 6,
+        "partial_torque_on_ids": [
+          1,
+          2,
+          3
+        ],
+        "torque_off_ids": [
+          4,
+          5,
+          6
+        ],
+        "upward_step_sent": false,
+        "recorded_unix": 1792810227.329437
+      }
+    },
+    "neck": {
+      "port": "/dev/cu.usbmodem5B610373751",
+      "port_verified": true,
+      "joints": {
+        "7": {
+          "name": "pan",
+          "commissioned": true,
+          "safe_raw_limits": [
+            1977,
+            2139
+          ],
+          "observed_raw_limits": [
+            973,
+            3358
+          ],
+          "last_observed_position": 1995,
+          "last_observed_state": {
+            "model": 777,
+            "min": 973,
+            "max": 3358,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 121,
+            "temperature_raw": 29,
+            "torque": 1,
+            "goal": 1995,
+            "position": 1995,
+            "moving": 0
+          },
+          "fault_bits": [],
+          "limits_source": "Conservative limits inside measured commissioning endpoints with8-tick margin; supervised stationary-base neck operation only.",
+          "last_supervised_test": {
+            "delta_raw": 91,
+            "start": 1968,
+            "target": 2059,
+            "reported_position": 2057,
+            "faults": [],
+            "torque": 1,
+            "camera_observation": "User confirmed visible movement; images consistent with pan right for positive ticks. Direction label still needs confirmation."
+          },
+          "commissioning_results": {
+            "trials_completed": 3,
+            "moves": [
+              {
+                "id": 7,
+                "start": 2058,
+                "target": 2149,
+                "position": 2147,
+                "completed_unix": 1791606243.91212,
+                "voltage_raw": 121,
+                "temperature_raw": 26,
+                "moving": 0
+              },
+              {
+                "id": 7,
+                "start": 2147,
+                "target": 2058,
+                "position": 2059,
+                "completed_unix": 1791606281.577322,
+                "voltage_raw": 121,
+                "temperature_raw": 26,
+                "moving": 0
+              },
+              {
+                "id": 7,
+                "start": 2059,
+                "target": 1967,
+                "position": 1969,
+                "completed_unix": 1791606563.561474,
+                "voltage_raw": 121,
+                "temperature_raw": 26,
+                "moving": 0
+              },
+              {
+                "id": 7,
+                "start": 1969,
+                "target": 2058,
+                "position": 2057,
+                "completed_unix": 1791606616.668347,
+                "voltage_raw": 121,
+                "temperature_raw": 26,
+                "moving": 0
+              },
+              {
+                "id": 7,
+                "start": 2057,
+                "target": 2149,
+                "position": 2147,
+                "completed_unix": 1791607014.19764,
+                "voltage_raw": 121,
+                "temperature_raw": 27,
+                "moving": 0
+              },
+              {
+                "id": 7,
+                "start": 2147,
+                "target": 2058,
+                "position": 2059,
+                "completed_unix": 1791607071.2002282,
+                "voltage_raw": 121,
+                "temperature_raw": 27,
+                "moving": 0
+              }
+            ],
+            "image_inferred_positive_direction": "right",
+            "operator_confirmation_pending": false,
+            "operator_witnessed_trials": 1,
+            "previous_trials_operator_absent": true,
+            "operator_observation": "User confirmed smooth right-and-return movement; returned pose points slightly right of robot-forward."
+          },
+          "positive_direction": "right"
+        },
+        "8": {
+          "name": "tilt",
+          "commissioned": true,
+          "safe_raw_limits": [
+            1959,
+            2120
+          ],
+          "observed_raw_limits": [
+            874,
+            3039
+          ],
+          "last_observed_position": 2042,
+          "last_observed_state": {
+            "model": 777,
+            "min": 874,
+            "max": 3039,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 121,
+            "temperature_raw": 33,
+            "torque": 1,
+            "goal": 2040,
+            "position": 2042,
+            "moving": 0
+          },
+          "fault_bits": [],
+          "limits_source": "Conservative limits inside measured commissioning endpoints with8-tick margin; supervised stationary-base neck operation only.",
+          "commissioning_results": {
+            "trials_completed": 3,
+            "moves": [
+              {
+                "id": 8,
+                "start": 2040,
+                "target": 2072,
+                "position": 2070,
+                "completed_unix": 1791605776.11955,
+                "voltage_raw": 121,
+                "temperature_raw": 29,
+                "moving": 0
+              },
+              {
+                "id": 8,
+                "start": 2071,
+                "target": 2040,
+                "position": 2042,
+                "completed_unix": 1791606014.749656,
+                "voltage_raw": 121,
+                "temperature_raw": 30,
+                "moving": 0
+              },
+              {
+                "id": 8,
+                "start": 2042,
+                "target": 2131,
+                "position": 2128,
+                "completed_unix": 1791606055.01312,
+                "voltage_raw": 121,
+                "temperature_raw": 30,
+                "moving": 0
+              },
+              {
+                "id": 8,
+                "start": 2129,
+                "target": 2040,
+                "position": 2042,
+                "completed_unix": 1791606117.3292658,
+                "voltage_raw": 121,
+                "temperature_raw": 30,
+                "moving": 0
+              },
+              {
+                "id": 8,
+                "start": 2042,
+                "target": 1949,
+                "position": 1951,
+                "completed_unix": 1791606162.748278,
+                "voltage_raw": 121,
+                "temperature_raw": 30,
+                "moving": 0
+              },
+              {
+                "id": 8,
+                "start": 1951,
+                "target": 2040,
+                "position": 2038,
+                "completed_unix": 1791606201.911322,
+                "voltage_raw": 121,
+                "temperature_raw": 30,
+                "moving": 0
+              }
+            ],
+            "image_inferred_positive_direction": "down",
+            "operator_confirmation_pending": false,
+            "operator_witnessed_trials": 2,
+            "operator_observation": "User confirmed visible smooth tilt-down and return without cable pulling, and accepted returned angle as default."
+          },
+          "positive_direction": "down"
+        }
+      }
+    }
+  },
+  "base": {
+    "port": "/dev/cu.usbmodem5B610369561",
+    "wheel_ids_FL_FR_RL_RR": [
+      8,
+      9,
+      7,
+      10
+    ],
+    "port_verified": true,
+    "commissioned": true,
+    "stationary_velocity_tolerance_raw": {
+      "8": 60,
+      "9": 60,
+      "7": 60,
+      "10": 60
+    },
+    "stationary_baseline": {
+      "date": "2026-10-12",
+      "observation": "User confirmed front-right wheel completely still; untouched-robot samples show front wheel raw speeds0/+50/-50, rear0, goals0, torque0. Tolerance is feedback baseline, not physical-stop proof.",
+      "torque_on_samples": "After user confirmed forward pulse stopped promptly,8 untouched stationary samples: ID7 speed0/+50/-50, other wheels0, torque1, goals0. ID7 tolerance60 added; ID10 remains10.",
+      "id10_observation": "Repeat preflight before dispatch found ID10 raw50 with torque1, goal0, fault-free. Same50-unit stationary reading seen on each wheel; all use60 margin now. Operator confirmed directions/stops during first round."
+    },
+    "commissioning_date": "2026-10-12",
+    "commissioning_results": {
+      "trials": [
+        {
+          "direction": "forward",
+          "request_id": "cde3dcf5-dbde-4f17-b583-664e7fde215e",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "backward",
+          "request_id": "98f6c688-9e83-46ff-a8fe-ff38bd44eef7",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "right",
+          "request_id": "93df96e6-2111-4372-8227-017fd75c9ac7",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "left",
+          "request_id": "15df383f-5ecd-4661-9433-72affec163c3",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "rotate-left",
+          "request_id": "b7ff220c-bcc7-465a-ac8f-f32c65305941",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "rotate-right",
+          "request_id": "8241f518-d851-478c-b9b3-dfd13d63264f",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "forward",
+          "request_id": "7b969549-7f87-44ef-8158-fd6f30b70899",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "backward",
+          "request_id": "92225144-972f-408f-99e9-ab51bf9f769f",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "right",
+          "request_id": "7f517294-02e4-4e57-8f65-84f756cd2186",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "left",
+          "request_id": "ffce517b-a919-4fe2-a4a1-add4dea284ee",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "rotate-left",
+          "request_id": "bbbe6e39-5cba-435c-b9d6-1e0035ee8171",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "rotate-right",
+          "request_id": "cde9ddb7-e9ce-44f3-b87b-f1d7995211ee",
+          "interrupt_test": false,
+          "stop_verified": true,
+          "exit_code": 0
+        },
+        {
+          "direction": "forward",
+          "request_id": "a7995fde-4354-4f47-9d43-4d47dfca129b",
+          "interrupt_test": true,
+          "stop_verified": true,
+          "exit_code": 1
+        }
+      ],
+      "counts": {
+        "forward": 2,
+        "backward": 2,
+        "right": 2,
+        "left": 2,
+        "rotate-left": 2,
+        "rotate-right": 2
+      },
+      "interruption": {
+        "unix": 1791867676.921695,
+        "event": "stop_result",
+        "result": [
+          {
+            "interrupted": true,
+            "note": "Inspect motion tool result for stop/hold acknowledgment; no physical sensing."
+          }
+        ]
+      },
+      "operator_final_confirmation_pending": false,
+      "operator_observation": "User confirmed all6 directions and prompt stops; final user confirmation includes repeated tests and interrupted pulse stopped promptly and remained still.",
+      "acceptance_scope": "Two trials per direction at user instruction to skip the third round; one active interruption. Clear level floor with physical supervision."
+    },
+    "command_limits": {
+      "seconds": 0.5,
+      "speed_m_s": 0.1,
+      "turn_deg_s": 20
+    },
+    "last_observed_wheel_states": {
+      "8": {
+        "mode": 1,
+        "torque": 1,
+        "goal_velocity": 0,
+        "present_velocity": 0,
+        "voltage": 119,
+        "temperature": 31
+      },
+      "9": {
+        "mode": 1,
+        "torque": 1,
+        "goal_velocity": 0,
+        "present_velocity": 0,
+        "voltage": 120,
+        "temperature": 30
+      },
+      "7": {
+        "mode": 1,
+        "torque": 1,
+        "goal_velocity": 0,
+        "present_velocity": 0,
+        "voltage": 120,
+        "temperature": 29
+      },
+      "10": {
+        "mode": 1,
+        "torque": 1,
+        "goal_velocity": 0,
+        "present_velocity": 0,
+        "voltage": 119,
+        "temperature": 35
+      }
+    }
+  },
+  "neck_test_session": {
+    "enabled": false,
+    "expires_unix": 1791609271.376205,
+    "scope": "User approved one91-tick tilt-down and return trial while observing; two tilt moves only.",
+    "joints": {
+      "7": {
+        "center_raw": 1995,
+        "radius_raw": 91,
+        "remaining_moves": 0
+      },
+      "8": {
+        "center_raw": 2042,
+        "radius_raw": 91,
+        "remaining_moves": 0
+      }
+    },
+    "stopped_reason": "Approved larger tilt down-and-return completed; awaiting operator observation/reference."
+  },
+  "neck_reference_pose_candidate": {
+    "7": 1995,
+    "8": 2040,
+    "camera_forward_verified": true,
+    "tilt_level_verified": false
+  },
+  "neck_reference_pose": {
+    "pan_id": 7,
+    "pan_raw": 1995,
+    "pan_forward_verified": true,
+    "tilt_id": 8,
+    "tilt_raw": 2040,
+    "tilt_level_verified": true,
+    "source": "User manually aligned pan; pan held1995. User accepted tilt return target2040, measured2042, as default view. Both directions confirmed through witnessed trials.",
+    "pan_hold_restored": true
+  },
+  "neck_commissioning_complete": true,
+  "arm_readiness_check": {
+    "date": "2026-10-16",
+    "all_torque_off": false,
+    "faults_found": false,
+    "selected_arm": "left-arm",
+    "supported_pose_verified": true,
+    "loaded_power_verified": false,
+    "next_step": "Await physical observation of negative-direction elbow test. Outward endpoint17tick residual exceeded4tick acceptance and16tick no-reset eligibility; fallback hold2553 acknowledged. No return/retry authorized.",
+    "supported_pose_raw": {
+      "1": 1903,
+      "2": 1303,
+      "3": 1762,
+      "4": 2167,
+      "5": 2169,
+      "6": 2017
+    },
+    "power_assumption": {
+      "date": "2026-10-16",
+      "separate_12v_cables_user_confirmed": true,
+      "left_current_rating_a_assumed": 3,
+      "left_planning_budget_w": 36,
+      "actual_cable_rating_verified": false,
+      "loaded_current_measured": false,
+      "note": "User requested assuming3A because exact rating is unknown. Planning assumption only; not a verified capacity or software current limit."
+    },
+    "hold_test": {
+      "status": "corrected retry passed; operator reports no jerk or unusual noise",
+      "failed_request_id": "55898c43-528d-45a7-95c3-0491f38a21f2",
+      "release_request_id": "da12ea01-3a54-42a0-bb41-ed84399c58dc",
+      "observed_issue": "TorqueON on IDs1/2 while target preloads were being written; all positions unchanged, stationary and fault-free.",
+      "recovery": "User supported arm; all6 torqueOFF verified.",
+      "revised_workflow": "Per-joint atomic current-position/time/speed packet, treat target write as activation; eight mock tests and supported live holding retry passed.",
+      "successful_request_id": "fdcbd3da-4cd9-4886-b49e-12244a3e024d",
+      "states_at_completion": {
+        "1": {
+          "model": 777,
+          "min": 776,
+          "max": 3132,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 121,
+          "temperature_raw": 34,
+          "torque": 1,
+          "goal": 1903,
+          "position": 1903,
+          "moving": 0
+        },
+        "2": {
+          "model": 777,
+          "min": 822,
+          "max": 3132,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 34,
+          "torque": 1,
+          "goal": 1303,
+          "position": 1303,
+          "moving": 0
+        },
+        "3": {
+          "model": 777,
+          "min": 650,
+          "max": 2804,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 34,
+          "torque": 1,
+          "goal": 1762,
+          "position": 1762,
+          "moving": 0
+        },
+        "4": {
+          "model": 777,
+          "min": 930,
+          "max": 3147,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 35,
+          "torque": 1,
+          "goal": 2167,
+          "position": 2167,
+          "moving": 0
+        },
+        "5": {
+          "model": 777,
+          "min": 488,
+          "max": 3774,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 34,
+          "torque": 1,
+          "goal": 2169,
+          "position": 2169,
+          "moving": 0
+        },
+        "6": {
+          "model": 777,
+          "min": 1453,
+          "max": 2808,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 35,
+          "torque": 1,
+          "goal": 2017,
+          "position": 2017,
+          "moving": 0
+        }
+      },
+      "operator_observation": "No jerk or unusual noise",
+      "historical_observation_only": true
+    },
+    "hardware_writes_count_known": false,
+    "yaw_test": {
+      "request_id": "f89a80df-7529-4fa0-8eb5-ea805c371ba3",
+      "delta_raw": 32,
+      "encoder_start": 1903,
+      "encoder_out": 1934,
+      "encoder_return": 1904,
+      "operator_observation": "No obvious visible movement; anatomical positive direction unconfirmed.",
+      "next_trial": "User approved one supported +80 raw tick yaw movement, two-second pause, then return. Live trial pending updated service restart.",
+      "larger_trial": {
+        "request_id": "de5ee1b5-651f-4847-9613-d07ff43b788c",
+        "delta_raw": 80,
+        "start_raw": 1904,
+        "out_readback": 1983,
+        "return_readback": 1905,
+        "operator_observation": "Smooth; initially left from robot perspective.",
+        "positive_raw_direction": "left yaw"
+      }
+    },
+    "shoulder_test": {
+      "request_id": "5193d0cc-87a7-4134-94b0-d69abf55c85f",
+      "delta_raw": 32,
+      "start_raw": 1301,
+      "out_readback": 1329,
+      "return_readback": 1301,
+      "operator_observation": "Smooth shoulder lift upward.",
+      "positive_raw_direction": "upward"
+    },
+    "elbow_test": {
+      "request_id": "a37d7f8c-b773-40b4-8596-ac6d66c67818",
+      "completed": false,
+      "error": "ID3 did not settle within3s",
+      "initial_raw": 1768,
+      "commanded_out_target_raw": 1800,
+      "cleanup_hold_goal_raw": 1776,
+      "poststop_position_raw": 1778,
+      "return_attempted": false,
+      "retried": false,
+      "poststop_states": {
+        "1": {
+          "model": 777,
+          "min": 776,
+          "max": 3132,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 121,
+          "temperature_raw": 34,
+          "torque": 1,
+          "goal": 1904,
+          "position": 1905,
+          "moving": 0
+        },
+        "2": {
+          "model": 777,
+          "min": 822,
+          "max": 3132,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 34,
+          "torque": 1,
+          "goal": 1301,
+          "position": 1301,
+          "moving": 0
+        },
+        "3": {
+          "model": 777,
+          "min": 650,
+          "max": 2804,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 119,
+          "temperature_raw": 35,
+          "torque": 1,
+          "goal": 1776,
+          "position": 1778,
+          "moving": 0
+        },
+        "4": {
+          "model": 777,
+          "min": 930,
+          "max": 3147,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 35,
+          "torque": 1,
+          "goal": 2167,
+          "position": 2167,
+          "moving": 0
+        },
+        "5": {
+          "model": 777,
+          "min": 488,
+          "max": 3774,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 34,
+          "torque": 1,
+          "goal": 2169,
+          "position": 2168,
+          "moving": 0
+        },
+        "6": {
+          "model": 777,
+          "min": 1453,
+          "max": 2808,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 35,
+          "torque": 1,
+          "goal": 2017,
+          "position": 2017,
+          "moving": 0
+        }
+      },
+      "physical_observation": "pending"
+    },
+    "elbow_retry": {
+      "request_id": "893a61cb-99f7-4a54-976a-87ebcb31a8e3",
+      "completed": false,
+      "initial_raw": 1778,
+      "out_target_raw": 1810,
+      "cleanup_hold_goal_raw": 1784,
+      "poststop_position_raw": 1786,
+      "return_attempted": false,
+      "error": "ID3 did not settle within3s again",
+      "further_motion_sent": false,
+      "poststop_states": {
+        "1": {
+          "model": 777,
+          "min": 776,
+          "max": 3132,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 121,
+          "temperature_raw": 34,
+          "torque": 1,
+          "goal": 1904,
+          "position": 1906,
+          "moving": 0
+        },
+        "2": {
+          "model": 777,
+          "min": 822,
+          "max": 3132,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 34,
+          "torque": 1,
+          "goal": 1301,
+          "position": 1301,
+          "moving": 0
+        },
+        "3": {
+          "model": 777,
+          "min": 650,
+          "max": 2804,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 119,
+          "temperature_raw": 35,
+          "torque": 1,
+          "goal": 1784,
+          "position": 1786,
+          "moving": 0
+        },
+        "4": {
+          "model": 777,
+          "min": 930,
+          "max": 3147,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 35,
+          "torque": 1,
+          "goal": 2167,
+          "position": 2167,
+          "moving": 0
+        },
+        "5": {
+          "model": 777,
+          "min": 488,
+          "max": 3774,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 34,
+          "torque": 1,
+          "goal": 2169,
+          "position": 2168,
+          "moving": 0
+        },
+        "6": {
+          "model": 777,
+          "min": 1453,
+          "max": 2808,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 35,
+          "torque": 1,
+          "goal": 2017,
+          "position": 2017,
+          "moving": 0
+        }
+      },
+      "read_only_settings": [
+        {
+          "unix": 1792208315.5847821,
+          "event": "preflight",
+          "id": 1,
+          "state": {
+            "model": 777,
+            "min": 776,
+            "max": 3132,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 121,
+            "temperature_raw": 34,
+            "torque": 1,
+            "goal": 1904,
+            "position": 1906,
+            "moving": 0,
+            "max_torque_raw": 1000,
+            "phase_raw": 12,
+            "position_p_raw": 32,
+            "position_d_raw": 32,
+            "position_i_raw": 0,
+            "starting_torque_raw": 16,
+            "dead_zone_positive_raw": 1,
+            "dead_zone_negative_raw": 1,
+            "angle_resolution_raw": 1,
+            "acceleration_raw": 0,
+            "running_speed_raw": 100,
+            "torque_limit_raw": 1000,
+            "present_speed_raw": 0,
+            "present_load_raw": 24,
+            "servo_status_raw": 0,
+            "motor_phase_current_raw": 0
+          },
+          "faults": {}
+        },
+        {
+          "unix": 1792208315.7794209,
+          "event": "preflight",
+          "id": 2,
+          "state": {
+            "model": 777,
+            "min": 822,
+            "max": 3132,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 119,
+            "temperature_raw": 34,
+            "torque": 1,
+            "goal": 1301,
+            "position": 1301,
+            "moving": 0,
+            "max_torque_raw": 1000,
+            "phase_raw": 12,
+            "position_p_raw": 32,
+            "position_d_raw": 32,
+            "position_i_raw": 0,
+            "starting_torque_raw": 16,
+            "dead_zone_positive_raw": 1,
+            "dead_zone_negative_raw": 1,
+            "angle_resolution_raw": 1,
+            "acceleration_raw": 0,
+            "running_speed_raw": 100,
+            "torque_limit_raw": 1000,
+            "present_speed_raw": 0,
+            "present_load_raw": 0,
+            "servo_status_raw": 0,
+            "motor_phase_current_raw": 0
+          },
+          "faults": {}
+        },
+        {
+          "unix": 1792208315.965614,
+          "event": "preflight",
+          "id": 3,
+          "state": {
+            "model": 777,
+            "min": 650,
+            "max": 2804,
+            "mode": 0,
+            "voltage_min_raw": 40,
+            "voltage_max_raw": 140,
+            "voltage_present_raw": 120,
+            "temperature_raw": 35,
+            "torque": 1,
+            "goal": 1784,
+            "position": 1786,
+            "moving": 0,
+            "max_torque_raw": 1000,
+            "phase_raw": 12,
+            "position_p_raw": 32,
+            "position_d_raw": 32,
+            "position_i_raw": 0,
+            "starting_torque_raw": 16,
+            "dead_zone_positive_raw": 1,
+            "dead_zone_negative_raw": 1,
+            "angle_resolution_raw": 1,
+            "acceleration_raw": 0,
+            "running_speed_raw": 100,
+            "torque_limit_raw": 1000,
+            "present_speed_raw": 0,
+            "present_load_raw": 24,
+            "servo_status_raw": 0,
+            "motor_phase_current_raw": 0
+          },
+          "faults": {}
+        }
+      ],
+      "cause": "undetermined; no diagnostic settings changed"
+    },
+    "elbow_diagnostic": {
+      "request_id": "c89d4b2f-110c-4350-93a8-0191e133630b",
+      "completed": false,
+      "failed_stage": "return",
+      "start_raw": 1786,
+      "out_target_and_feedback_raw": 1818,
+      "return_target_raw": 1786,
+      "return_feedback_raw": 1793,
+      "hold_goal_raw": 1793,
+      "hold_acknowledged": true,
+      "interpretation": "Outward target reached exactly; return stopped7ticks above target with zero speed and moving0. Four-tick settling criterion failed. This does not establish cause of previous two outward failures.",
+      "operator_observation": "Hardly saw movement; physical joint/direction still unconfirmed."
+    },
+    "elbow_80_test": {
+      "completed": false,
+      "servo_id": 3,
+      "delta_raw": 80,
+      "start_raw": 1794,
+      "failed_stage": "return",
+      "error": "Elbow return did not settle in 3 seconds; ending trial and requesting hold",
+      "cleanup": {
+        "attempted": true,
+        "hold_acknowledged": true,
+        "hold_goal_raw": 1800
+      },
+      "return_attempted": true,
+      "request_id": "10539760-cefd-4ddb-8aad-ac8a26987c7c",
+      "operator_observation": "Smooth arm movement downward with increasing ticks, then smoothly back; user thinks elbow flex. Return residual6ticks remains outside4tick acceptance."
+    },
+    "wrist_test": {
+      "completed": true,
+      "servo_id": 4,
+      "delta_raw": 32,
+      "servo_degrees": 2.8125,
+      "pause_seconds": 2,
+      "start_raw": 2167,
+      "torque": "left on",
+      "note": "Supported wrist commissioning only; no other joint writes; loaded power remains unqualified.",
+      "request_id": "163b854d-cd58-4464-8c0e-14170560c474",
+      "operator_observation": "Smooth wrist movement downward, then smoothly back."
+    },
+    "roll_test": {
+      "completed": true,
+      "servo_id": 5,
+      "delta_raw": 32,
+      "servo_degrees": 2.8125,
+      "pause_seconds": 2,
+      "start_raw": 2168,
+      "torque": "left on",
+      "note": "Supported roll commissioning only; no other joint writes; loaded power remains unqualified.",
+      "request_id": "61734cc8-8a2c-4530-81a6-b8e882d522a2",
+      "operator_observation": "Clockwise when gripper tip faces operator, then rotated back."
+    },
+    "gripper_test": {
+      "completed": true,
+      "servo_id": 6,
+      "delta_raw": 32,
+      "servo_degrees": 2.8125,
+      "pause_seconds": 2,
+      "start_raw": 2017,
+      "torque": "left on",
+      "note": "Supported gripper commissioning only; no other joint writes; loaded power remains unqualified.",
+      "request_id": "cef29095-7908-4037-bede-96a8934314f6",
+      "operator_observation": "Smooth; opened wider, upper part moved up, then returned."
+    },
+    "elbow_return_tolerance_change": {
+      "authorized_by_user": true,
+      "scope": "supported ID3 commissioning only",
+      "outward_ticks": 4,
+      "return_ticks": 8,
+      "stationary_samples": 3,
+      "mock_tests_passed": 19,
+      "live_verification": "passed; operator confirmed smooth and normal",
+      "accuracy_improved": false
+    },
+    "elbow_return8_verification": {
+      "completed": true,
+      "servo_id": 3,
+      "delta_raw": 80,
+      "servo_degrees": 7.03125,
+      "pause_seconds": 2,
+      "settling_tolerances_raw": {
+        "out": 4,
+        "return": 8
+      },
+      "start_raw": 1802,
+      "torque": "left on",
+      "note": "Supported elbow commissioning only; no other joint writes; loaded power remains unqualified.",
+      "request_id": "45a3a4d3-d111-4574-9d86-9a84d15f19c5",
+      "operator_observation": "Smooth and normal"
+    },
+    "yaw_clearance_plan": {
+      "authorized": true,
+      "sequence_relative_ticks": [
+        80,
+        0,
+        -80,
+        0
+      ],
+      "pause_seconds": 2,
+      "calibration_writes": false,
+      "mock_tests_passed": 15,
+      "live_verification": "passed; operator confirmed smooth, correct observer-view directions, no collision",
+      "scope": "supported empty arm, other joints at current pose; not a full-arm collision envelope"
+    },
+    "yaw_clearance_result": {
+      "completed": true,
+      "servo_id": 1,
+      "delta_raw": 80,
+      "servo_degrees": 7.03125,
+      "pause_seconds": 2,
+      "start_raw": 1906,
+      "torque": "left on",
+      "note": "Supported yaw range commissioning only; no other joint writes; loaded power remains unqualified.",
+      "request_id": "3797be13-59de-4e88-89b7-056945700f99",
+      "operator_observation": {
+        "smooth": true,
+        "contact": false,
+        "binding": false,
+        "cable_clearance_confirmed": true,
+        "sequence": "observer-left, center, observer-right, center",
+        "viewpoint": "gripper tip facing operator",
+        "positive_raw_direction": "observer-left"
+      }
+    },
+    "resume_date": "2026-10-23",
+    "hold_restored_2026_10_17": {
+      "request_id": "d9cd4d75-6b5a-43d4-9644-515e1d786d0f",
+      "completed": true,
+      "operator_observation": "Smooth engagement",
+      "states": {
+        "1": {
+          "model": 777,
+          "min": 776,
+          "max": 3132,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 121,
+          "temperature_raw": 28,
+          "torque": 1,
+          "goal": 1905,
+          "position": 1905,
+          "moving": 0
+        },
+        "2": {
+          "model": 777,
+          "min": 822,
+          "max": 3132,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 29,
+          "torque": 1,
+          "goal": 1066,
+          "position": 1066,
+          "moving": 0
+        },
+        "3": {
+          "model": 777,
+          "min": 650,
+          "max": 2804,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 119,
+          "temperature_raw": 29,
+          "torque": 1,
+          "goal": 2508,
+          "position": 2508,
+          "moving": 0
+        },
+        "4": {
+          "model": 777,
+          "min": 930,
+          "max": 3147,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 30,
+          "torque": 1,
+          "goal": 2173,
+          "position": 2173,
+          "moving": 0
+        },
+        "5": {
+          "model": 777,
+          "min": 488,
+          "max": 3774,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 28,
+          "torque": 1,
+          "goal": 2169,
+          "position": 2169,
+          "moving": 0
+        },
+        "6": {
+          "model": 777,
+          "min": 1453,
+          "max": 2808,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 29,
+          "torque": 1,
+          "goal": 2018,
+          "position": 2018,
+          "moving": 0
+        }
+      }
+    },
+    "shoulder_clearance_plan": {
+      "authorized": true,
+      "relative_sequence_ticks": [
+        80,
+        0,
+        -80,
+        0
+      ],
+      "pause_seconds": 2,
+      "mock_tests_passed": 15,
+      "live_verification": "controller passed; operator confirms sequence, mostly smooth; clearance/smoothness clarification pending",
+      "scope": "supported empty arm in today\u2019s pose; saved limits unchanged"
+    },
+    "shoulder_clearance_result": {
+      "completed": true,
+      "servo_id": 2,
+      "delta_raw": 80,
+      "servo_degrees": 7.03125,
+      "pause_seconds": 2,
+      "start_raw": 1066,
+      "torque": "left on",
+      "note": "Supported shoulder range commissioning only; no other joint writes; loaded power remains unqualified.",
+      "request_id": "83ea2f91-b38c-4764-a98e-9a956b02b085",
+      "operator_observation": {
+        "sequence_confirmed": "up, center, down, center",
+        "smoothness": "mostly smooth",
+        "clearance_and_cables": "not explicitly confirmed",
+        "followup": "Clarify hesitation versus jerk/binding before marking clearance complete."
+      }
+    },
+    "hold_restored_2026_10_23": {
+      "request_id": "240b68f6-f206-4727-8996-3ea1b00c3a41",
+      "completed": true,
+      "operator_observation": "Smooth engagement",
+      "states": {
+        "1": {
+          "model": 777,
+          "min": 776,
+          "max": 3132,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 121,
+          "temperature_raw": 28,
+          "torque": 1,
+          "goal": 1907,
+          "position": 1907,
+          "moving": 0
+        },
+        "2": {
+          "model": 777,
+          "min": 822,
+          "max": 3132,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 28,
+          "torque": 1,
+          "goal": 1148,
+          "position": 1148,
+          "moving": 0
+        },
+        "3": {
+          "model": 777,
+          "min": 650,
+          "max": 2804,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 28,
+          "torque": 1,
+          "goal": 2501,
+          "position": 2501,
+          "moving": 0
+        },
+        "4": {
+          "model": 777,
+          "min": 930,
+          "max": 3147,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 29,
+          "torque": 1,
+          "goal": 2173,
+          "position": 2173,
+          "moving": 0
+        },
+        "5": {
+          "model": 777,
+          "min": 488,
+          "max": 3774,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 28,
+          "torque": 1,
+          "goal": 2170,
+          "position": 2170,
+          "moving": 0
+        },
+        "6": {
+          "model": 777,
+          "min": 1453,
+          "max": 2808,
+          "mode": 0,
+          "voltage_min_raw": 40,
+          "voltage_max_raw": 140,
+          "voltage_present_raw": 120,
+          "temperature_raw": 28,
+          "torque": 1,
+          "goal": 2018,
+          "position": 2018,
+          "moving": 0
+        }
+      }
+    },
+    "shoulder_followup": {
+      "operator_choice": "Skip acceleration tuning; roughness unresolved",
+      "acceleration_settings_changed": false,
+      "shoulder_clearance_complete": false
+    },
+    "elbow_clearance_plan": {
+      "authorized": true,
+      "relative_sequence_ticks": [
+        80,
+        0,
+        -80,
+        0
+      ],
+      "pause_seconds": 2,
+      "endpoint_tolerance_ticks": 4,
+      "center_tolerance_ticks": 8,
+      "mock_tests_passed": 20,
+      "live_verification": "stopped: first return13ticks from target; opposite leg not attempted",
+      "scope": "supported empty arm, current fixed pose, unchanged saved calibration limits"
+    },
+    "elbow_clearance_result": {
+      "completed": false,
+      "servo_id": 3,
+      "delta_raw": 80,
+      "start_raw": 2507,
+      "failed_stage": "center-after-positive",
+      "error": "Elbow range center-after-positive did not settle in 3 seconds; ending trial and requesting hold",
+      "cleanup": {
+        "attempted": true,
+        "hold_acknowledged": true,
+        "hold_goal_raw": 2520
+      },
+      "return_attempted": true,
+      "request_id": "5fd879ad-101a-4458-846d-976ca99ae568",
+      "operator_observation": "Downward movement and partial return looked smooth."
+    },
+    "elbow_clearance_retry": {
+      "completed": false,
+      "servo_id": 3,
+      "delta_raw": 80,
+      "start_raw": 2524,
+      "failed_stage": "center-after-positive",
+      "error": "Elbow range center-after-positive did not settle in 3 seconds; ending trial and requesting hold",
+      "cleanup": {
+        "attempted": true,
+        "hold_acknowledged": true,
+        "hold_goal_raw": 2537
+      },
+      "return_attempted": true,
+      "request_id": "b97d95dc-8761-461f-92de-2df7d979efb2"
+    },
+    "wrist_clearance_plan": {
+      "authorized": true,
+      "relative_sequence_ticks": [
+        80,
+        0,
+        -80,
+        0
+      ],
+      "directions": [
+        "down",
+        "center",
+        "up",
+        "center"
+      ],
+      "pause_seconds": 2,
+      "mock_tests_passed": 15,
+      "live_verification": "stopped: first return5ticks outside4tick criterion; upward excursion not attempted",
+      "scope": "supported empty arm at current pose; ID3 holding only"
+    },
+    "wrist_clearance_result": {
+      "completed": false,
+      "servo_id": 4,
+      "delta_raw": 80,
+      "start_raw": 2173,
+      "failed_stage": "center-after-down",
+      "error": "Wrist range center-after-down did not settle in 3 seconds; ending trial and requesting hold",
+      "cleanup": {
+        "attempted": true,
+        "hold_acknowledged": true,
+        "hold_goal_raw": 2178
+      },
+      "return_attempted": true,
+      "request_id": "a93f77c8-6b8a-494d-8151-c77372c97872",
+      "operator_observation": "Movement and partial return looked smooth."
+    },
+    "wrist_return_tolerance_change": {
+      "authorized": true,
+      "scope": "ID4 clearance commissioning center returns only",
+      "endpoint_ticks": 4,
+      "center_ticks": 6,
+      "stationary_samples": 3,
+      "mock_tests_passed": 20,
+      "live_verification": "passed; operator described sequence as smooth",
+      "servo_tuning_changed": false
+    },
+    "wrist_return6_verification": {
+      "completed": true,
+      "servo_id": 4,
+      "delta_raw": 80,
+      "servo_degrees": 7.03125,
+      "pause_seconds": 2,
+      "start_raw": 2178,
+      "torque": "left on",
+      "note": "Supported wrist range commissioning only; no other joint writes; loaded power remains unqualified.",
+      "request_id": "05656b9c-8e89-4b7e-9fd8-b0a491f2b13b",
+      "operator_observation": "Smooth"
+    },
+    "roll_clearance_plan": {
+      "authorized": true,
+      "relative_sequence_ticks": [
+        80,
+        0,
+        -80,
+        0
+      ],
+      "directions": [
+        "clockwise",
+        "center",
+        "counterclockwise",
+        "center"
+      ],
+      "viewpoint": "gripper tip toward arm",
+      "pause_seconds": 2,
+      "tolerance_ticks": 4,
+      "mock_tests_passed": 15,
+      "live_verification": "controller passed; operator described full sequence as smooth"
+    },
+    "roll_clearance_result": {
+      "completed": true,
+      "servo_id": 5,
+      "delta_raw": 80,
+      "servo_degrees": 7.03125,
+      "pause_seconds": 2,
+      "start_raw": 2170,
+      "torque": "left on",
+      "note": "Supported roll range commissioning only; no other joint writes; loaded power remains unqualified.",
+      "request_id": "71d16391-aec2-4735-8f19-27c8949759e4",
+      "operator_observation": "Smooth"
+    },
+    "gripper_clearance_plan": {
+      "authorized": true,
+      "relative_sequence_ticks": [
+        80,
+        0,
+        -80,
+        0
+      ],
+      "directions": [
+        "farther-open",
+        "center",
+        "toward-closed",
+        "center"
+      ],
+      "pause_seconds": 2,
+      "tolerance_ticks": 4,
+      "mock_tests_passed": 15,
+      "live_verification": "controller passed; operator described full empty-gripper sequence as smooth",
+      "gripper_empty_required": true
+    },
+    "gripper_clearance_result": {
+      "completed": true,
+      "servo_id": 6,
+      "delta_raw": 80,
+      "servo_degrees": 7.03125,
+      "pause_seconds": 2,
+      "start_raw": 2018,
+      "torque": "left on",
+      "note": "Supported gripper range commissioning only; no other joint writes; loaded power remains unqualified.",
+      "request_id": "a7b669a7-a1c1-4e86-b7e7-bd51a7fb812f",
+      "operator_observation": "Smooth"
+    },
+    "elbow_weight_support_comparison": {
+      "completed": false,
+      "servo_id": 3,
+      "delta_raw": 80,
+      "start_raw": 2539,
+      "failed_stage": "return",
+      "error": "Elbow return did not settle in 3 seconds; ending trial and requesting hold",
+      "cleanup": {
+        "attempted": true,
+        "hold_acknowledged": true,
+        "hold_goal_raw": 2548
+      },
+      "return_attempted": true,
+      "request_id": "ec7e6539-5cec-45f6-9853-c4bbb9de6dc3",
+      "comparison": {
+        "prior_return_error_ticks": [
+          13,
+          13
+        ],
+        "supported_trial_return_error_ticks": 9,
+        "prior_end_return_load_magnitude_raw": 112,
+        "supported_end_return_load_magnitude_raw": 80,
+        "interpretation": "Operator confirms wrist weight supported and smooth motion. Return residual improved13 to9ticks, consistent with load/support affecting tracking; not controlled proof of root cause, excessive gripper weight or payload qualification.",
+        "tolerance_changed": false
+      },
+      "operator_observation": {
+        "wrist_gripper_weight_supported": true,
+        "motion_smooth": true
+      }
+    },
+    "elbow_poststop_tick_trial": {
+      "completed": false,
+      "servo_id": 3,
+      "delta_raw": 80,
+      "start_raw": 2552,
+      "failed_stage": "return",
+      "error": "Elbow return did not settle in 3 seconds; ending trial and requesting hold",
+      "cleanup": {
+        "attempted": true,
+        "hold_acknowledged": true,
+        "hold_goal_raw": 2566
+      },
+      "return_attempted": true,
+      "request_id": "3a03285d-16a9-42db-a2d4-e9b4af57e8e4",
+      "operator_observation": "pending",
+      "interpretation": "Return14ticks outside unchanged8tick limit; cleanup target changed2552\u21922566. First post-response feedback2570, then stable for5s at17samples, goal2566/moving0/no faults. Four-tick feedback change around cleanup is consistent with a small corrective motion; fast twitch timing/cause unproven."
+    },
+    "elbow_watched_tick_trial": {
+      "completed": false,
+      "servo_id": 3,
+      "delta_raw": 80,
+      "start_raw": 2570,
+      "failed_stage": "return",
+      "error": "Elbow return did not settle in 3 seconds; ending trial and requesting hold",
+      "cleanup": {
+        "attempted": true,
+        "hold_acknowledged": true,
+        "hold_goal_raw": 2583
+      },
+      "return_attempted": true,
+      "request_id": "0b615941-cb56-4ec7-aff8-9c0a651fd6f2",
+      "operator_observation": {
+        "visible_twitch_after_stop": true,
+        "audible_click_after_stop": true
+      },
+      "interpretation": "Return13ticks outside8tick criterion; cleanup target changed2570\u21922583. First post-response feedback2587, then17stable samples over5s with moving0 and no faults. Repeated4tick feedback difference around cleanup, exact physical cause/timing unproven.",
+      "operator_sound_clarification": "Audible sound like normal servo movement; operator did not consider sound concerning."
+    },
+    "elbow_hold_transition_review": {
+      "date": "2026-10-23",
+      "hardware_commands": 0,
+      "confirmed_behavior": "Generic timeout cleanup writes measured position as a new goal despite stationary feedback.",
+      "watched_trial_goal_before": 2570,
+      "cleanup_goal": 2583,
+      "post_response_feedback": 2587,
+      "conclusion": "Plausible software contribution to post-stop twitch; exact physical click cause unproven.",
+      "correction_implemented": true,
+      "proposed_next_step": "Design and mock-test distinct handling for verified-stationary tolerance misses; do not remove moving/fault/uncertain-state cleanup or ignore sustained load."
+    },
+    "elbow_hold_transition_fix": {
+      "date": "2026-10-23",
+      "implemented": true,
+      "scope": "two ID3 commissioning controllers only",
+      "stationary_timeout_action": "Fail test and end sequence, preserve existing target/holding torque, send no replacement target when narrow evidence gate passes.",
+      "existing_failure_cleanup_retained": true,
+      "motion_tolerances_changed": false,
+      "servo_settings_changed": false,
+      "offline_tests_passed": 53,
+      "mcp_tools_integration_checked": 25,
+      "live_verification": "Target preservation verified; operator confirmed no twitch and stayed still during one supervised trial."
+    },
+    "elbow_fixed_timeout_verification": {
+      "completed": false,
+      "servo_id": 3,
+      "delta_raw": 80,
+      "start_raw": 2587,
+      "failed_stage": "return",
+      "failure_kind": "stationary_settling_timeout",
+      "error": "Elbow return missed tolerance while verified stationary; existing target preserved",
+      "cleanup": {
+        "attempted": false,
+        "hold_acknowledged": false,
+        "action": "preserve_existing_target",
+        "goal_raw": 2587,
+        "verified_stationary": {
+          "samples": 3,
+          "span_seconds": 0.1656,
+          "goal_raw": 2587,
+          "positions_raw": [
+            2601,
+            2601,
+            2601
+          ],
+          "residual_ticks": 14,
+          "note": "Positioning test still failed. Existing target and torque retained; no new target sent."
+        },
+        "target_write_sent": false
+      },
+      "return_attempted": true,
+      "request_id": "a6ac8bc2-a0f2-4f24-adda-391bae95f0e0",
+      "operator_observation": "No twitch; stayed still",
+      "interpretation": "Hardware confirms stationary-timeout branch preserved return target2587 and issued no cleanup target. Position2601 unchanged across17post-response samples over5s; no faults. Return14tick error still fails8tick criterion. Operator post-stop twitch observation pending."
+    },
+    "elbow_coarse_return_acceptance": {
+      "authorized": true,
+      "date": "2026-10-23",
+      "scope": "supported ID3 commissioning center returns only",
+      "center_return_tolerance_ticks": 16,
+      "endpoint_tolerance_ticks": 4,
+      "id3_stationary_preflight_goal_error_ticks": 16,
+      "other_joint_preflight_goal_error_ticks": 8,
+      "target_reset_fix_retained": true,
+      "offline_tests_passed": 61,
+      "live_verification": "Passed one supervised down/back trial; smooth and no post-stop twitch confirmed.",
+      "accuracy_improved": false
+    },
+    "elbow_return16_verification": {
+      "completed": true,
+      "servo_id": 3,
+      "delta_raw": 80,
+      "servo_degrees": 7.03125,
+      "pause_seconds": 2,
+      "settling_tolerances_raw": {
+        "out": 4,
+        "return": 16
+      },
+      "start_raw": 2601,
+      "torque": "left on",
+      "note": "Supported elbow commissioning only; no other joint writes; loaded power remains unqualified.",
+      "request_id": "f31a4a78-c63b-490b-bfe4-7fa99b638ea8",
+      "operator_observation": "Smooth; no post-stop twitch"
+    },
+    "elbow_opposite_plan": {
+      "authorized": true,
+      "direction": "negative",
+      "excursion_ticks": -80,
+      "return_tolerance_ticks": 16,
+      "endpoint_tolerance_ticks": 4,
+      "pause_seconds": 2,
+      "live_verification": "failed outward endpoint17ticks from target; no return attempted",
+      "mock_controller_tests_passed": 33
+    },
+    "elbow_opposite_result": {
+      "completed": false,
+      "servo_id": 3,
+      "delta_raw": -80,
+      "start_raw": 2616,
+      "failed_stage": "out",
+      "failure_kind": "other",
+      "error": "Elbow out did not settle in 3 seconds; ending trial and requesting hold",
+      "cleanup": {
+        "attempted": true,
+        "hold_acknowledged": true,
+        "hold_goal_raw": 2553
+      },
+      "return_attempted": false,
+      "request_id": "2eacd224-25ae-4a4f-b6bd-41d8ef884913",
+      "operator_observation": "pending"
+    }
+  }
+}

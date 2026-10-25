@@ -202,10 +202,15 @@ def cmd_scan(args):
         return 1
 
     ids = range(0, 254) if args.full else range(0, 21)
-    print(f"\nPinging IDs {ids.start}-{ids.stop - 1} across {len(SCAN_BAUDRATES)} baud rates...")
+    bauds = [args.baud] if args.baud else SCAN_BAUDRATES
+    if args.baud and args.baud not in SCAN_BAUDRATES:
+        print(f"Warning: {args.baud} is not one of the rates the SDK supports "
+              f"({', '.join(str(b) for b in SCAN_BAUDRATES)}); it may be rejected.")
+    print(f"\nPinging IDs {ids.start}-{ids.stop - 1} across "
+          f"{len(bauds)} baud rate{'' if len(bauds) == 1 else 's'}...")
     found_any = False
     for port in targets:
-        for baud in SCAN_BAUDRATES:
+        for baud in bauds:
             try:
                 ph, pk = open_port(port, baud, timeout_ms=args.timeout)
             except OSError as e:
@@ -231,6 +236,8 @@ def cmd_scan(args):
             ph.closePort()
 
     if not found_any:
+        if args.baud:
+            print(f"\nNothing answered at baud={args.baud}. Rerun without --baud to sweep every rate.")
         print("\nNo servo responded. Next checks: servo power (it needs its own supply,")
         print("USB alone is not enough), the data line wiring, and -- if you only scanned")
         print("IDs 0-20 -- rerun with --full.")
@@ -563,6 +570,8 @@ def main():
     p = sub.add_parser("scan", parents=[common], help="find servos and dump the registers of each one found")
     p.add_argument("--port", help="only scan this port")
     p.add_argument("--full", action="store_true", help="scan IDs 0-253 instead of 0-20")
+    p.add_argument("--baud", type=int, default=None,
+                   help="only probe this baud rate instead of sweeping all 11 (e.g. 1000000)")
     p.add_argument("--no-dump", action="store_true",
                    help="only report which IDs answered, do not dump their registers")
     p.set_defaults(func=cmd_scan)
