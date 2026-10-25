@@ -58,7 +58,7 @@ async def integration():
                     async with ClientSession(read,write) as session:
                         await session.initialize()
                         names={t.name for t in (await session.list_tools()).tools}
-                        assert names=={'preview_left_gripper_up','move_left_gripper_up','move_left_shoulder_up','preview_right_gripper_up','move_right_gripper_up','base_motion_state','base_status','robot_info','joint_status','camera_snapshot','move_base','nudge_joint','test_neck_pan','test_neck_joint','pan_torque','left_arm_hold','right_arm_hold', 'test_left_yaw','test_right_yaw','test_right_elbow_p','test_right_shoulder','test_right_elbow','test_right_wrist','test_right_roll','test_right_gripper','test_right_yaw_range','test_right_shoulder_range','test_right_elbow_range','test_right_wrist_range','test_right_roll_range','test_right_gripper_range', 'test_left_shoulder','test_left_elbow','test_left_wrist','test_left_roll','test_left_gripper','test_left_yaw_range','test_left_shoulder_range','test_left_elbow_range','test_left_wrist_range','test_left_roll_range','test_left_gripper_range','stop_active','stop_base'},names
+                        assert names=={'preview_left_gripper_up','move_left_gripper_up','move_left_shoulder_up','preview_right_gripper_up','move_right_gripper_up','base_motion_state','base_status','robot_info','joint_status','camera_snapshot','move_base','nudge_joint','test_neck_pan','test_neck_joint','pan_torque','left_arm_hold','right_arm_hold', 'test_left_yaw','test_right_yaw','test_right_elbow_p','test_right_shoulder','test_right_elbow','test_right_wrist','test_right_roll','test_right_gripper','test_right_yaw_range','test_right_shoulder_range','test_right_elbow_range','test_right_wrist_range','test_right_roll_range','test_right_gripper_range', 'test_left_shoulder','test_left_elbow','test_left_elbow_bias','test_left_wrist','test_left_roll','test_left_gripper','test_left_yaw_range','test_left_shoulder_range','test_left_elbow_range','test_left_wrist_range','test_left_roll_range','test_left_gripper_range','stop_active','stop_base'},names
                         assert not (await session.call_tool('robot_info',{})).isError
                         result=await session.call_tool('move_base',{'direction':'forward','seconds':9,'request_id':'44444444-4444-4444-8444-444444444444'})
                         assert result.isError
@@ -75,6 +75,7 @@ async def integration():
                             ('test_left_yaw', {'expected_positions':{'1':1903},'request_id':'invalid'}),
                             ('test_left_shoulder', {'expected_positions':{'2':1301},'request_id':'invalid'}),
                             ('test_left_elbow', {'expected_positions':{'3':1768},'request_id':'invalid'}),
+                            ('test_left_elbow_bias', {'expected_positions':{'3':1768},'request_id':'invalid'}),
                             ('test_left_wrist', {'expected_positions':{'4':2167},'request_id':'invalid'}),
                             ('test_left_roll', {'expected_positions':{'5':2168},'request_id':'invalid'}),
                             ('test_left_gripper', {'expected_positions':{'6':2017},'request_id':'invalid'}),
@@ -204,6 +205,9 @@ async def integration():
                         elbow={'expected_positions':{str(m):1900 for m in range(1,7)},'request_id':'88888888-8888-4888-8888-888888888888'}
                         assert not (await session.call_tool('test_left_elbow',elbow)).isError
                         assert (await session.call_tool('test_left_elbow',elbow)).isError
+                        bias={'expected_positions':{str(m):1900 for m in range(1,7)},'request_id':str(uuid.uuid4())}
+                        assert not (await session.call_tool('test_left_elbow_bias',bias)).isError
+                        assert (await session.call_tool('test_left_elbow_bias',bias)).isError
                         wrist={'expected_positions':{str(m):1900 for m in range(1,7)},'request_id':'99999999-9999-4999-8999-999999999999'}
                         assert not (await session.call_tool('test_left_wrist',wrist)).isError
                         assert (await session.call_tool('test_left_wrist',wrist)).isError

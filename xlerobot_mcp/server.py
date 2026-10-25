@@ -90,7 +90,7 @@ class Controller:
                         await asyncio.shield(task)
                     raise
                 result = {'mock': False, 'exit_code': self.active.returncode,
-                          'stdout': out.decode()[-128000:] if script in ('left_gripper_up.py','left_shoulder_up.py','right_gripper_up.py','right_elbow_p_test.py','right_arm_test.py','left_yaw_range_test.py','left_shoulder_range_test.py','left_elbow_range_test.py','left_wrist_range_test.py','left_roll_range_test.py','left_gripper_range_test.py') else out.decode()[-64000:] if script in ('left_elbow_test.py','left_wrist_test.py','left_roll_test.py','left_gripper_test.py') else out.decode()[-16000:], 'stderr': err.decode()[-4000:]}
+                          'stdout': out.decode()[-128000:] if script in ('left_gripper_up.py','left_shoulder_up.py','right_gripper_up.py','right_elbow_p_test.py','right_arm_test.py','left_yaw_range_test.py','left_shoulder_range_test.py','left_elbow_range_test.py','left_wrist_range_test.py','left_roll_range_test.py','left_gripper_range_test.py') else out.decode()[-64000:] if script in ('left_elbow_test.py','left_elbow_bias_test.py','left_wrist_test.py','left_roll_test.py','left_gripper_test.py') else out.decode()[-16000:], 'stderr': err.decode()[-4000:]}
                 if self.active.returncode:
                     raise ValueError(json.dumps(result))
                 return result
@@ -248,6 +248,13 @@ def build_server(controller):
         args=['--expected-positions',json.dumps(expected_positions),'--direction',direction,'--amplitude-deg',str(amplitude_deg)]
         if slow:args.append('--slow')
         return await controller.run('left_elbow_test.py',args,True,request_id,timeout=20)
+
+    @mcp.tool(annotations=WRITE)
+    async def test_left_elbow_bias(expected_positions: dict[str,int], request_id: str) -> dict:
+        """One explicitly supervised left-arm ID3 gravity-sag trial. Reads the existing elbow goal and its stationary residual (5-16 ticks), commands goal minus residual at speed30 (at most32ticks travel, within saved limits), waits for stationary feedback and reports whether position reached the original goal within4ticks. Biased goal stays in place; no return or retry. Empty arm supported, all six joints already holding. No other joint writes; leaves torque on."""
+        if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):
+            raise ValueError('Provide all6 fresh integer positions')
+        return await controller.run('left_elbow_bias_test.py',['--expected-positions',json.dumps(expected_positions)],True,request_id,timeout=15)
 
     @mcp.tool(annotations=WRITE)
     async def test_left_wrist(expected_positions: dict[str,int], request_id: str) -> dict:
