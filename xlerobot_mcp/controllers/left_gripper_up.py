@@ -134,21 +134,48 @@ def shoulder_leading_plan(expected,cal,goals,distance_mm,coarse=False):
     raise ValueError(f'No bounded lift with1mm planning margin: {detail}')
 
 
-def make_plan(group,states,expected,offsets,execute=False,distance_mm=5,coarse=False):
+# Gravity-sag command biases: servo id -> (name, maximum ticks).
+BIASES={'3':('elbow',16),'4':('wrist',8)}
+
+
+def make_plan(group,states,expected,offsets,execute=False,distance_mm=5,coarse=False,elbow_bias_ticks=0,wrist_bias_ticks=0):
     if type(distance_mm) not in (int,float) or not math.isfinite(distance_mm) or not (10<=distance_mm<=20 if coarse else 2<=distance_mm<=10):raise ValueError('distance_mm must be finite:2-10 strict or10-20 coarse')
     if type(coarse) is not bool:raise ValueError('coarse must be boolean')
+    requested={'3':elbow_bias_ticks,'4':wrist_bias_ticks}
+    for mid,(name,limit) in BIASES.items():
+        if type(requested[mid]) is not int or not 0<=requested[mid]<=limit:raise ValueError(f'{name}_bias_ticks must be an integer0-{limit}')
+        if requested[mid] and not coarse:raise ValueError(f'{name}_bias_ticks requires coarse mode')
     cal=group.get('kinematic_calibration')
     if not isinstance(cal,dict):raise ValueError('Capture/verify left calibration before Cartesian planning')
     cal_bytes=json.dumps(cal,sort_keys=True).encode();goals={m:s['goal'] for m,s in states.items()}
+    # A biased joint's stored goal is a sag-compensated command, not a pose;
+    # plan it from its measured position and re-add the bias on send.
+    planning_goals=goals|{mid:expected[mid] for mid in BIASES if requested[mid]}
     result=reach.plan(group,states,expected,cal,offsets,cal_bytes,reach.URDF.read_bytes(),execute,
-                      solver=lambda e,c:shoulder_leading_plan(e,c,goals,distance_mm,**({'coarse':True} if coarse else {})),step_mm=distance_mm,goal_error_limit=8,waypoint_limit=16,coarse=coarse)
+                      solver=lambda e,c:shoulder_leading_plan(e,c,planning_goals,distance_mm,**({'coarse':True} if coarse else {})),step_mm=distance_mm,goal_error_limit=8,waypoint_limit=16,coarse=coarse)
     # Stored goals influence stage1 even when measured positions are unchanged.
-    result['plan_hash']=hashlib.sha256(json.dumps({'base_plan_hash':result['plan_hash'],'starting_goals':goals},sort_keys=True).encode()).hexdigest()
+    identity={'base_plan_hash':result['plan_hash'],'starting_goals':goals}
+    for mid,(name,limit) in BIASES.items():
+        result[f'measured_{name}_sag_ticks']=states[mid]['position']-states[mid]['goal']
+        bias=0
+        if requested[mid]:
+            travel=result['targets'][mid]-expected[mid]
+            # Sign comes from travel; a joint that barely moves gives no reliable
+            # sag direction, and the bias would just push it away from its pose.
+            if abs(travel)<requested[mid]:raise ValueError(f'Plan moves the {name} only {travel} ticks, less than its bias; use a smaller {name}_bias_ticks or another pose')
+            # Gravity sag lags behind travel, so command ahead in the travel direction.
+            bias=requested[mid] if travel>0 else -requested[mid]
+            lo,hi=group['joints'][mid]['safe_raw_limits']
+            commands=[point[mid]+bias for point in result['waypoints']]
+            if any(not lo<=c<=hi for c in commands) or abs(commands[0]-goals[mid])>32:raise ValueError(f'Biased {name} commands violate saved or first-stage limits')
+            identity[f'{name}_bias_ticks']=bias
+        result[f'{name}_bias_ticks']=bias
+    result['plan_hash']=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
     return result
 
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('action',choices=['preview','execute']);parser.add_argument('--expected-positions',required=True);parser.add_argument('--plan-hash');parser.add_argument('--distance-mm',type=float,default=5);parser.add_argument('--coarse',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('action',choices=['preview','execute']);parser.add_argument('--expected-positions',required=True);parser.add_argument('--plan-hash');parser.add_argument('--distance-mm',type=float,default=5);parser.add_argument('--coarse',action='store_true');parser.add_argument('--elbow-bias-ticks',type=int,default=0);parser.add_argument('--wrist-bias-ticks',type=int,default=0);args=parser.parse_args()
     group=json.loads(reach.rt.jc.CONFIG.read_text())['groups']['left-arm'];expected=json.loads(args.expected_positions)
     import scservo_sdk as sdk
     port=group['port'];name=hashlib.sha256(os.path.realpath(port).encode()).hexdigest()[:20]
@@ -159,7 +186,7 @@ def main():
             def timeout(length):ph.packet_start_time=ph.getCurrentTime();ph.packet_timeout=ph.tx_time_per_byte*(length+3)+50
             ph.setPacketTimeout=timeout;time.sleep(.1)
             states=reach.rt.ah.snapshot(sdk,ph,pk);offsets=reach.calibration_offsets(sdk,ph,pk)
-            p=make_plan(group,states,expected,offsets,args.action=='execute',distance_mm=args.distance_mm,coarse=args.coarse)
+            p=make_plan(group,states,expected,offsets,args.action=='execute',distance_mm=args.distance_mm,coarse=args.coarse,elbow_bias_ticks=args.elbow_bias_ticks,wrist_bias_ticks=args.wrist_bias_ticks)
             if args.action=='preview':result={'completed':True,'plan':p,'hardware_writes':False}
             else:
                 if args.plan_hash!=p['plan_hash']:raise ValueError('Preview identity changed; obtain a new preview')

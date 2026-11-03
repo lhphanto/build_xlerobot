@@ -96,9 +96,28 @@ def main():
     try:
         asyncio.run(execute(args))
     except (Exception, KeyboardInterrupt) as exc:
-        # Exception groups may conceal low-level connection failure; no credentials printed.
-        print(json.dumps({'error': str(exc), 'retried': False,
-                          'note': 'If a motion was dispatched, treat its outcome as uncertain; do not retry.'}), file=sys.stderr)
+        # The MCP session wraps tool errors in exception groups; report the
+        # underlying messages, and the controller result when one is embedded.
+        def leaves(error):
+            if isinstance(error, BaseExceptionGroup):
+                for inner in error.exceptions:
+                    yield from leaves(inner)
+            else:
+                yield error
+        messages = [str(e) or type(e).__name__ for e in leaves(exc)]
+        report = {'error': '; '.join(messages), 'retried': False,
+                  'note': 'If a motion was dispatched, treat its outcome as uncertain; do not retry.'}
+        for message in messages:
+            start = message.find('{')
+            try:
+                tool_result = json.loads(message[start:]) if start >= 0 else None
+            except json.JSONDecodeError:
+                continue
+            if isinstance(tool_result, dict):
+                report['tool_result'] = tool_result
+                report['error'] = 'Tool failed; see tool_result'
+                break
+        print(json.dumps(report), file=sys.stderr)
         return 1
     return 0
 

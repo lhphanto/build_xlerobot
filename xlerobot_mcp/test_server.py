@@ -181,6 +181,20 @@ async def integration():
                         for distance in (1,10.1):
                             assert (await session.call_tool('preview_left_gripper_up',{'expected_positions':left_positions,'distance_mm':distance})).isError
                             assert (await session.call_tool('move_left_gripper_up',{**left_cart,'distance_mm':distance,'request_id':str(uuid.uuid4())})).isError
+                        result=await session.call_tool('move_left_gripper_up',{**left_cart,'coarse':True,'distance_mm':20,'elbow_bias_ticks':13,'request_id':str(uuid.uuid4())})
+                        assert not result.isError
+                        forwarded=json.loads(result.content[0].text)['arguments']
+                        assert forwarded[forwarded.index('--elbow-bias-ticks')+1]=='13'
+                        result=await session.call_tool('move_left_gripper_up',{**left_cart,'coarse':True,'distance_mm':20,'elbow_bias_ticks':9,'wrist_bias_ticks':5,'request_id':str(uuid.uuid4())})
+                        assert not result.isError
+                        forwarded=json.loads(result.content[0].text)['arguments']
+                        assert forwarded[forwarded.index('--wrist-bias-ticks')+1]=='5'
+                        for wrist,coarse in ((3,False),(9,True),(-1,True)):
+                            assert (await session.call_tool('preview_left_gripper_up',{'expected_positions':left_positions,'coarse':coarse,'distance_mm':20 if coarse else 5,'wrist_bias_ticks':wrist})).isError
+                            assert (await session.call_tool('move_left_gripper_up',{**left_cart,'coarse':coarse,'distance_mm':20 if coarse else 5,'wrist_bias_ticks':wrist,'request_id':str(uuid.uuid4())})).isError
+                        for bias,coarse in ((5,False),(17,True),(-1,True)):
+                            assert (await session.call_tool('preview_left_gripper_up',{'expected_positions':left_positions,'coarse':coarse,'distance_mm':20 if coarse else 5,'elbow_bias_ticks':bias})).isError
+                            assert (await session.call_tool('move_left_gripper_up',{**left_cart,'coarse':coarse,'distance_mm':20 if coarse else 5,'elbow_bias_ticks':bias,'request_id':str(uuid.uuid4())})).isError
                         for tool in ('preview_left_gripper_up','move_left_gripper_up'):
                             args_coarse={'expected_positions':left_positions,'coarse':True,'distance_mm':20}
                             if tool.startswith('move_'):args_coarse.update(plan_hash='c'*64,request_id=str(uuid.uuid4()))

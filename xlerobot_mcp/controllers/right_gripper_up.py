@@ -145,6 +145,14 @@ def execute(sdk,ph,pk,group,initial,p,observer=None):
     leading=coarse or p.get('execution_policy')=='left_shoulder_leading_v1'
     if leading and (observer is None or (not coarse and (p.get('intermediate_tolerance_ticks')!=8 or p.get('final_tolerance_ticks')!=4)) or (coarse and p.get('joint_tolerances')!={'2':8,'3':16,'4':4}) or len(p.get('stage_minimum_heights_m',[]))!=len(p['waypoints'])):raise ValueError('Leading plan requires model observer and fixed tracking policy')
     if coarse and (p.get('coarse') is not True or not 10<=p['step_mm']<=20 or p['stage_minimum_heights_m'][-1]!=p['step_mm']/2000):raise ValueError('Fixed coarse lift completion policy required')
+    offsets={str(m):0 for m in ACTIVE}
+    for mid,name,limit in (('3','elbow',16),('4','wrist',8)):
+        bias=p.get(f'{name}_bias_ticks',0)
+        if type(bias) is not int or abs(bias)>limit or (bias and not coarse):raise ValueError(f'{name.capitalize()} bias requires the left coarse policy and at most{limit}ticks')
+        offsets[mid]=bias
+    # Waypoints are desired positions; only biased joint commands carry an offset.
+    # A biased joint may land slightly past its waypoint, so allow4ticks there.
+    biased=[m for m in offsets if offsets[m]];overshoot={m:4 if offsets[m] else 0 for m in offsets}
     attempted=set();commands={str(m):s['goal'] for m,s in initial.items()};trace=[];recent={str(m):[] for m in ACTIVE};cleanup={'attempted':False}
     def monitor(stage):
         states=rt.ah.snapshot(sdk,ph,pk)
@@ -169,22 +177,28 @@ def execute(sdk,ph,pk,group,initial,p,observer=None):
             monitor(stage)
             for motor in ACTIVE:
                 mid=str(motor)
-                if point[mid]!=commands[mid]:
-                    attempted.add(motor);commands[mid]=point[mid]
-                    packet(sdk,ph,pk,motor,point[mid])
+                command=point[mid]+offsets[mid]
+                if command!=commands[mid]:
+                    attempted.add(motor);commands[mid]=command
+                    packet(sdk,ph,pk,motor,command)
             deadline=time.monotonic()+1.5;stable=0
             tolerance=8 if leading and stage<len(p['waypoints']) else 4
             tolerances=p['joint_tolerances'] if coarse else {str(m):tolerance for m in ACTIVE}
             continue_tracking=coarse and stage<len(p['waypoints'])
             required_samples=1 if continue_tracking else 3
+            last_biased=None
             while time.monotonic()<deadline:
                 states=monitor(stage)
+                # A biased joint can coast past its waypoint; don't trust the moving flag alone.
+                now_biased={m:states[m]['position'] for m in biased}
+                still=not biased or continue_tracking or (last_biased is not None and all(abs(now_biased[m]-last_biased[m])<=1 for m in biased))
+                last_biased=now_biased
                 progress_ok=not leading or observer(states)[2]>=p['stage_minimum_heights_m'][stage-1]
                 # Lag sampling covers positions between baseline and each
                 # intermediate target. Do not advance from an unsampled overshoot.
                 if leading and (coarse or stage<len(p['waypoints'])):
-                    progress_ok=progress_ok and all(min(p['expected_positions'][str(m)],point[str(m)])<=states[str(m)]['position']<=max(p['expected_positions'][str(m)],point[str(m)]) for m in ACTIVE)
-                stable=stable+1 if progress_ok and all(abs(states[str(m)]['position']-point[str(m)])<=tolerances[str(m)] and (continue_tracking or not states[str(m)]['moving']) for m in ACTIVE) else 0
+                    progress_ok=progress_ok and all(min(p['expected_positions'][str(m)],point[str(m)])-overshoot[str(m)]<=states[str(m)]['position']<=max(p['expected_positions'][str(m)],point[str(m)])+overshoot[str(m)] for m in ACTIVE)
+                stable=stable+1 if progress_ok and still and all(abs(states[str(m)]['position']-point[str(m)])<=tolerances[str(m)] and (continue_tracking or not states[str(m)]['moving']) for m in ACTIVE) else 0
                 if stable>=required_samples:break
                 time.sleep(.05)
             else:
