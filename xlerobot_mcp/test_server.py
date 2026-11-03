@@ -58,7 +58,7 @@ async def integration():
                     async with ClientSession(read,write) as session:
                         await session.initialize()
                         names={t.name for t in (await session.list_tools()).tools}
-                        assert names=={'preview_left_gripper_up','move_left_gripper_up','move_left_shoulder_up','preview_right_gripper_up','move_right_gripper_up','base_motion_state','base_status','robot_info','joint_status','camera_snapshot','move_base','nudge_joint','test_neck_pan','test_neck_joint','pan_torque','left_arm_hold','right_arm_hold', 'test_left_yaw','test_right_yaw','test_right_elbow_p','test_right_shoulder','test_right_elbow','test_right_wrist','test_right_roll','test_right_gripper','test_right_yaw_range','test_right_shoulder_range','test_right_elbow_range','test_right_wrist_range','test_right_roll_range','test_right_gripper_range', 'test_left_shoulder','test_left_elbow','test_left_elbow_bias','test_left_wrist','test_left_roll','test_left_gripper','test_left_yaw_range','test_left_shoulder_range','test_left_elbow_range','test_left_wrist_range','test_left_roll_range','test_left_gripper_range','stop_active','stop_base'},names
+                        assert names=={'preview_left_gripper_up','move_left_gripper_up','preview_left_start_pose','move_left_start_pose','move_left_shoulder_up','preview_right_gripper_up','move_right_gripper_up','base_motion_state','base_status','robot_info','joint_status','camera_snapshot','move_base','nudge_joint','test_neck_pan','test_neck_joint','pan_torque','left_arm_hold','right_arm_hold', 'test_left_yaw','test_right_yaw','test_right_elbow_p','test_right_shoulder','test_right_elbow','test_right_wrist','test_right_roll','test_right_gripper','test_right_yaw_range','test_right_shoulder_range','test_right_elbow_range','test_right_wrist_range','test_right_roll_range','test_right_gripper_range', 'test_left_shoulder','test_left_elbow','test_left_elbow_bias','test_left_wrist','test_left_roll','test_left_gripper','test_left_yaw_range','test_left_shoulder_range','test_left_elbow_range','test_left_wrist_range','test_left_roll_range','test_left_gripper_range','stop_active','stop_base'},names
                         assert not (await session.call_tool('robot_info',{})).isError
                         result=await session.call_tool('move_base',{'direction':'forward','seconds':9,'request_id':'44444444-4444-4444-8444-444444444444'})
                         assert result.isError
@@ -189,6 +189,13 @@ async def integration():
                         assert not result.isError
                         forwarded=json.loads(result.content[0].text)['arguments']
                         assert forwarded[forwarded.index('--wrist-bias-ticks')+1]=='5'
+                        result=await session.call_tool('preview_left_start_pose',{'expected_positions':left_positions})
+                        assert not result.isError and json.loads(result.content[0].text)['script']=='left_start_pose.py'
+                        assert (await session.call_tool('preview_left_start_pose',{'expected_positions':{'2':1900}})).isError
+                        start_move={'expected_positions':left_positions,'plan_hash':'c'*64,'request_id':str(uuid.uuid4())}
+                        assert not (await session.call_tool('move_left_start_pose',start_move)).isError
+                        assert (await session.call_tool('move_left_start_pose',start_move)).isError
+                        assert (await session.call_tool('move_left_start_pose',{**start_move,'plan_hash':'invalid','request_id':str(uuid.uuid4())})).isError
                         for wrist,coarse in ((3,False),(9,True),(-1,True)):
                             assert (await session.call_tool('preview_left_gripper_up',{'expected_positions':left_positions,'coarse':coarse,'distance_mm':20 if coarse else 5,'wrist_bias_ticks':wrist})).isError
                             assert (await session.call_tool('move_left_gripper_up',{**left_cart,'coarse':coarse,'distance_mm':20 if coarse else 5,'wrist_bias_ticks':wrist,'request_id':str(uuid.uuid4())})).isError

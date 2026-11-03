@@ -90,7 +90,7 @@ class Controller:
                         await asyncio.shield(task)
                     raise
                 result = {'mock': False, 'exit_code': self.active.returncode,
-                          'stdout': out.decode()[-128000:] if script in ('left_gripper_up.py','left_shoulder_up.py','right_gripper_up.py','right_elbow_p_test.py','right_arm_test.py','left_yaw_range_test.py','left_shoulder_range_test.py','left_elbow_range_test.py','left_wrist_range_test.py','left_roll_range_test.py','left_gripper_range_test.py') else out.decode()[-64000:] if script in ('left_elbow_test.py','left_elbow_bias_test.py','left_wrist_test.py','left_roll_test.py','left_gripper_test.py') else out.decode()[-16000:], 'stderr': err.decode()[-4000:]}
+                          'stdout': out.decode()[-128000:] if script in ('left_gripper_up.py','left_start_pose.py','left_shoulder_up.py','right_gripper_up.py','right_elbow_p_test.py','right_arm_test.py','left_yaw_range_test.py','left_shoulder_range_test.py','left_elbow_range_test.py','left_wrist_range_test.py','left_roll_range_test.py','left_gripper_range_test.py') else out.decode()[-64000:] if script in ('left_elbow_test.py','left_elbow_bias_test.py','left_wrist_test.py','left_roll_test.py','left_gripper_test.py') else out.decode()[-16000:], 'stderr': err.decode()[-4000:]}
                 if self.active.returncode:
                     raise ValueError(json.dumps(result))
                 return result
@@ -442,6 +442,19 @@ def build_server(controller):
         if type(elbow_bias_ticks) is not int or not 0<=elbow_bias_ticks<=16 or (elbow_bias_ticks and not coarse):raise ValueError('elbow_bias_ticks must be0-16 and requires coarse')
         if type(wrist_bias_ticks) is not int or not 0<=wrist_bias_ticks<=8 or (wrist_bias_ticks and not coarse):raise ValueError('wrist_bias_ticks must be0-8 and requires coarse')
         return await controller.run('left_gripper_up.py',['execute','--expected-positions',json.dumps(expected_positions),'--plan-hash',plan_hash,'--distance-mm',str(distance_mm),'--elbow-bias-ticks',str(elbow_bias_ticks),'--wrist-bias-ticks',str(wrist_bias_ticks)]+(['--coarse'] if coarse else []),True,request_id,timeout=30)
+
+    @mcp.tool(annotations=READ)
+    async def preview_left_start_pose(expected_positions: dict[str,int]) -> dict:
+        """Read-only plan to the fixed left lift start pose (shoulder850, elbow2787, wrist2150). IDs2-4 only, <=128ticks/joint, <=16ticks/stage. Reports modeled gripper height change; negative means down. All six must already be holding. No writes."""
+        if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
+        return await controller.run('left_start_pose.py',['preview','--expected-positions',json.dumps(expected_positions)],timeout=30)
+
+    @mcp.tool(annotations=WRITE)
+    async def move_left_start_pose(expected_positions: dict[str,int], plan_hash: str, request_id: str) -> dict:
+        """One supervised left-arm move to the fixed lift start pose, then hold. IDs2-4 only at speed30, no arbitrary target. After settling, one bounded feedback correction; final within8ticks or reported as failed. On failure holds without retry or return. Empty arm, operator watching with the gripper's path clear and cutoff available. All six already holding. No PID/EEPROM/limit changes; leaves torque on."""
+        if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
+        if len(plan_hash)!=64 or any(c not in '0123456789abcdef' for c in plan_hash):raise ValueError('Valid preview hash required')
+        return await controller.run('left_start_pose.py',['execute','--expected-positions',json.dumps(expected_positions),'--plan-hash',plan_hash],True,request_id,timeout=45)
 
     @mcp.tool(annotations=WRITE)
     async def stop_active() -> dict:
