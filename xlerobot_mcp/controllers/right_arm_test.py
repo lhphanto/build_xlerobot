@@ -41,7 +41,7 @@ def validate(group, states, expected, motor, offsets):
         if not lo <= state['position'] <= hi or not lo <= state['goal'] <= hi or abs(state['goal']-state['position']) > 8 or abs(state['position']-expected[mid]) > 4:
             raise ValueError('Pose changed, outside limits, or outstanding target')
         if not 110 <= state['voltage_present_raw'] <= 130 or state['temperature_raw'] >= 60:
-            raise ValueError('Power or temperature unsuitable')
+            raise ValueError(f"Power or temperature unsuitable: ID{mid} voltage {state['voltage_present_raw']}, temperature {state['temperature_raw']}")
     start = states[str(motor)]['position']
     lo, hi = group['joints'][str(motor)]['safe_raw_limits']
     if any(not lo <= start+d <= hi for d in offsets):
@@ -85,7 +85,7 @@ def control(sdk, ph, pk, group, expected, motor, clearance=False, direction='pos
             if state['model'] != 777 or state['mode'] != 0 or state['torque'] != 1 or [state['min'], state['max']] != [baseline['min'], baseline['max']]:
                 raise RuntimeError('Joint holding or calibration changed')
             if not lo <= state['position'] <= hi or not 110 <= state['voltage_present_raw'] <= 130 or state['temperature_raw'] >= 60:
-                raise RuntimeError('Pose, power or temperature unsuitable')
+                raise RuntimeError(f"Pose, power or temperature unsuitable: ID{mid} position {state['position']} limits {lo}-{hi}, voltage {state['voltage_present_raw']}, temperature {state['temperature_raw']}")
             if mid == str(motor):
                 if not low <= state['position'] <= high or state['goal'] != goal:
                     raise RuntimeError('Selected joint escaped trial window or target changed')

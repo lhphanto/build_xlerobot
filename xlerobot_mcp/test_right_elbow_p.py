@@ -24,7 +24,7 @@ class ElbowP(unittest.TestCase):
                     return parent.regs[addr],0,0
                 return super().read1ByteTxRx(ph,motor,addr)
             def write1ByteTxRx(self,ph,motor,addr,value):
-                assert motor==3 and (addr,value) in ((21,16),(21,24),(55,0),(55,1))
+                assert motor==3 and (addr,value) in ((21,16),(21,24),(21,32),(55,0),(55,1))
                 if addr==21:assert parent.regs[55]==0
                 parent.writes.append((motor,addr,value))
                 match=parent.fail==(addr,value)
@@ -64,15 +64,24 @@ class ElbowP(unittest.TestCase):
                 with self.assertRaises(ValueError):self.run_trial()
                 self.assertEqual(self.writes,[]);self.assertEqual(self.f.events,[])
     def test_outstanding_target_rejects_before_gain_write(self):
-        self.f.states['3']['goal']+=6
+        self.f.states['3']['goal']+=9
         with self.assertRaises(ValueError):self.run_trial()
         self.assertEqual(self.writes,[])
+    def test_p32_trial_restores_gain_and_lock(self):
+        result=self.run_trial(32)
+        self.assertTrue(result['completed']);self.assertTrue(result['restoration']['verified']);self.assert_restored()
+        self.assertEqual([(a,v) for m,a,v in self.writes],[(55,0),(21,32),(55,1),(55,0),(21,16),(55,1)])
+    def test_measured_hands_off_sag_may_start_gain_trial(self):
+        self.f.states['3']['goal']-=7  # Position 7 ticks past goal, as measured November2.
+        result=self.run_trial()
+        self.assertEqual(self.writes[:3],[(3,55,0),(3,21,24),(3,55,1)]);self.assert_restored()
+        self.assertTrue(result['restoration']['verified'])
     def test_torque_off_rejects_before_gain_write(self):
         self.f.states['3']['torque']=0
         with self.assertRaises(ValueError):self.run_trial()
         self.assertEqual(self.writes,[])
     def test_pending_record_blocks_trial(self):
-        pt.write_record(self.path,self.f.group['port'])
+        pt.write_record(self.path,self.f.group['port'],24)
         with self.assertRaisesRegex(ValueError,'Pending'):self.run_trial()
         self.assertEqual(self.writes,[])
     def test_p24_write_failure_restores_without_motion(self):
@@ -105,15 +114,19 @@ class ElbowP(unittest.TestCase):
         self.fail=(21,16);self.failure_mode='after'
         result=self.run_trial();self.assertTrue(result['restoration']['verified']);self.assert_restored()
     def test_restore_only_never_commands_targets(self):
-        pt.write_record(self.path,self.f.group['port']);self.regs[21]=24
+        pt.write_record(self.path,self.f.group['port'],24);self.regs[21]=24
         for s in self.f.states.values():s['torque']=0
         result=self.run_trial(action='restore');self.assertTrue(result['completed']);self.assertEqual(self.f.events,[]);self.assert_restored()
     def test_recovery_wrong_bus_rejected(self):
-        pt.write_record(self.path,'wrong-port')
+        pt.write_record(self.path,'wrong-port',24)
         with self.assertRaises(ValueError):self.run_trial(action='restore')
         self.assertEqual(self.writes,[])
+    def test_p32_record_restores_after_interrupted_trial(self):
+        pt.write_record(self.path,self.f.group['port'],32);self.regs[21]=32
+        result=self.run_trial(action='restore')
+        self.assertTrue(result['completed']);self.assert_restored()
     def test_no_free_gain_or_register(self):
-        with self.assertRaises(ValueError):self.run_trial(32)
+        with self.assertRaises(ValueError):self.run_trial(40)
         with self.assertRaises(ValueError):pt.write_byte(self.f.sdk,None,self.f.pk,23,1)
         self.assertEqual(self.writes,[])
 

@@ -90,7 +90,7 @@ class Controller:
                         await asyncio.shield(task)
                     raise
                 result = {'mock': False, 'exit_code': self.active.returncode,
-                          'stdout': out.decode()[-128000:] if script in ('left_gripper_up.py','left_start_pose.py','left_shoulder_up.py','right_gripper_up.py','right_elbow_p_test.py','right_arm_test.py','left_yaw_range_test.py','left_shoulder_range_test.py','left_elbow_range_test.py','left_wrist_range_test.py','left_roll_range_test.py','left_gripper_range_test.py') else out.decode()[-64000:] if script in ('left_elbow_test.py','left_elbow_bias_test.py','left_wrist_test.py','left_roll_test.py','left_gripper_test.py') else out.decode()[-16000:], 'stderr': err.decode()[-4000:]}
+                          'stdout': out.decode()[-128000:] if script in ('left_gripper_up.py','left_start_pose.py','right_start_pose.py','left_shoulder_up.py','right_gripper_up.py','right_elbow_p_test.py','right_arm_test.py','left_yaw_range_test.py','left_shoulder_range_test.py','left_elbow_range_test.py','left_wrist_range_test.py','left_roll_range_test.py','left_gripper_range_test.py') else out.decode()[-64000:] if script in ('left_elbow_test.py','left_elbow_bias_test.py','left_wrist_test.py','left_roll_test.py','left_gripper_test.py') else out.decode()[-16000:], 'stderr': err.decode()[-4000:]}
                 if self.active.returncode:
                     raise ValueError(json.dumps(result))
                 return result
@@ -193,6 +193,12 @@ def build_server(controller):
         args=['--id',str(servo_id),'--target',str(target_raw),'--expected-position',str(expected_position),'--execute']
         if enable_if_off: args.append('--enable-if-off')
         return await controller.run('neck_test.py',args,True,request_id)
+
+    @mcp.tool(annotations=WRITE)
+    async def neck_hold(expected_positions: dict[str,int], request_id: str) -> dict:
+        """Enable holding on commissioned neck IDs7-8 at their current pose, tilt first: preloads each goal to current feedback before torque; no commanded travel. Both must be stationary inside operating limits and within8ticks of expected_positions. Use after power-up when nudge_joint reports torque off. Operator watches the camera mount."""
+        if set(expected_positions)!={'7','8'} or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('Fresh integer positions for IDs7 and8 required')
+        return await controller.run('neck_hold.py',['--expected-positions',json.dumps(expected_positions)],True,request_id)
 
     @mcp.tool(annotations=WRITE)
     async def pan_torque(action: Literal['release','hold'], expected_position: int, request_id: str) -> dict:
@@ -397,9 +403,14 @@ def build_server(controller):
         return await controller.run('right_arm_test.py',['--id','6','--expected-positions',json.dumps(expected_positions),'--clearance'],True,request_id,timeout=30)
 
     @mcp.tool(annotations=WRITE)
+    async def set_right_elbow_p(p: Literal[16,32], request_id: str) -> dict:
+        """Explicit persistent right-ID3 gain change to fixed P16 or P32, then relock and verify. ID3 must be torque off (release the supported arm first); commands no motion. Refused while a P recovery is pending. LeRobot robot.connect() can rewrite P; read position_p_raw before relying on it."""
+        return await controller.run('right_elbow_p_set.py',['--p',str(p)],True,request_id)
+
+    @mcp.tool(annotations=WRITE)
     async def test_right_elbow_p(request_id: str, action: Literal['trial','restore']='trial',
-                                 trial_p: Literal[16,24]=16, expected_positions: dict[str,int] | None=None) -> dict:
-        """One supervised right-ID3 +32tick trial and return at fixed P16 or24, then restore original16 and lock1. All six holding, empty arm supported. P is protected configuration: temporary experiment writes can persist until verified restoration. Recovery journal blocks new motion if unfinished; restore action only restores fixed P16/lock1, no travel. Trials at16/24 are separate calls; operator must reestablish the same supported pose for comparison. Four-tick accuracy criterion unchanged."""
+                                 trial_p: Literal[16,24,32]=16, expected_positions: dict[str,int] | None=None) -> dict:
+        """One supervised right-ID3 +32tick trial and return at fixed P16,24 or32, then restore original16 and lock1. All six holding, empty arm supported. P is protected configuration: temporary experiment writes can persist until verified restoration. Recovery journal blocks new motion if unfinished; restore action only restores fixed P16/lock1, no travel. Trials at16/24 are separate calls; operator must reestablish the same supported pose for comparison. Four-tick accuracy criterion unchanged."""
         positions=expected_positions or {}
         if action=='trial' and (set(positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in positions.values())):
             raise ValueError('Provide all6 fresh integer positions')
@@ -455,6 +466,19 @@ def build_server(controller):
         if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
         if len(plan_hash)!=64 or any(c not in '0123456789abcdef' for c in plan_hash):raise ValueError('Valid preview hash required')
         return await controller.run('left_start_pose.py',['execute','--expected-positions',json.dumps(expected_positions),'--plan-hash',plan_hash],True,request_id,timeout=45)
+
+    @mcp.tool(annotations=READ)
+    async def preview_right_start_pose(expected_positions: dict[str,int]) -> dict:
+        """Read-only plan to the fixed right start pose (shoulder1105, elbow2990, wrist2230). IDs2-4 only, <=128ticks/joint, <=16ticks/stage. Reports modeled gripper height change. All six must already be holding. No writes."""
+        if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
+        return await controller.run('right_start_pose.py',['preview','--expected-positions',json.dumps(expected_positions)],timeout=30)
+
+    @mcp.tool(annotations=WRITE)
+    async def move_right_start_pose(expected_positions: dict[str,int], plan_hash: str, request_id: str) -> dict:
+        """One supervised right-arm move to the fixed start pose, then hold. IDs2-4 only at speed30, no arbitrary target. After settling, one bounded feedback correction; final within8ticks or reported as failed. On failure holds without retry or return. Empty arm, operator watching with the gripper's path clear and cutoff available. All six already holding. No PID/EEPROM/limit changes; leaves torque on."""
+        if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
+        if len(plan_hash)!=64 or any(c not in '0123456789abcdef' for c in plan_hash):raise ValueError('Valid preview hash required')
+        return await controller.run('right_start_pose.py',['execute','--expected-positions',json.dumps(expected_positions),'--plan-hash',plan_hash],True,request_id,timeout=45)
 
     @mcp.tool(annotations=WRITE)
     async def stop_active() -> dict:

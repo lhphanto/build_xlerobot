@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One supported right-ID3 +32tick trial at P16 or P24; restore original P16."""
+"""One supported right-ID3 +32tick trial at P16, P24 or P32; restore original P16."""
 import argparse
 import contextlib
 import fcntl
@@ -27,7 +27,7 @@ def read_byte(sdk, ph, pk, addr):
 
 
 def write_byte(sdk, ph, pk, addr, value):
-    if (addr, value) not in ((21,16),(21,24),(55,0),(55,1)):
+    if (addr, value) not in ((21,16),(21,24),(21,32),(55,0),(55,1)):
         raise ValueError('Only fixed ID3 P and lock writes allowed')
     comm, error = pk.write1ByteTxRx(ph, MOTOR, addr, value)
     if comm != sdk.COMM_SUCCESS or error:
@@ -36,13 +36,13 @@ def write_byte(sdk, ph, pk, addr, value):
         raise RuntimeError(f'ID3 readback mismatch at {addr}')
 
 
-def write_record(path, port):
+def write_record(path, port, trial_p):
     path.parent.mkdir(parents=True, exist_ok=True)
     # Reserved before any protected write. Survives server/process restarts.
     with path.open('x') as handle:
         os.chmod(path,0o600)
         json.dump({'port':port,'id':3,'original_p':16,'original_lock':1,
-                   'trial_p':24,'created_unix':time.time()},handle)
+                   'trial_p':trial_p,'created_unix':time.time()},handle)
         handle.flush()
         os.fsync(handle.fileno())
     fd=os.open(str(path.parent),os.O_RDONLY)
@@ -52,7 +52,7 @@ def write_record(path, port):
 
 def restore(sdk, ph, pk, port, path):
     record=json.loads(path.read_text())
-    if any(record.get(k)!=v for k,v in {'port':port,'id':3,'original_p':16,'original_lock':1,'trial_p':24}.items()):
+    if any(record.get(k)!=v for k,v in {'port':port,'id':3,'original_p':16,'original_lock':1}.items()) or record.get('trial_p') not in (24,32):
         raise ValueError('Recovery record does not match fixed right-ID3 settings')
     failures=[]
     # Readback is required even after a lost acknowledgment. No motion retry.
@@ -76,8 +76,8 @@ def restore(sdk, ph, pk, port, path):
 
 
 def control(sdk, ph, pk, group, expected, trial_p, path=RECOVERY, action='trial'):
-    if type(trial_p) is not int or trial_p not in (16,24) or action not in ('trial','restore'):
-        raise ValueError('Fixed P16/P24 trial or recovery only')
+    if type(trial_p) is not int or trial_p not in (16,24,32) or action not in ('trial','restore'):
+        raise ValueError('Fixed P16/P24/P32 trial or recovery only')
     if action=='restore':
         if not path.exists():raise ValueError('No pending P recovery')
         # Recovery does not command motion/torque and cannot select a free register.
@@ -93,9 +93,11 @@ def control(sdk, ph, pk, group, expected, trial_p, path=RECOVERY, action='trial'
     prepared=rt.prepare(group,expected,3)
     initial=rt.ah.snapshot(sdk,ph,pk)
     start=rt.validate(prepared,initial,expected,3,[32,0])
-    # Gain changes must not amplify an existing target error.
-    if abs(initial['3']['goal']-start)>4:
-        raise ValueError('ID3 requires holding goal within4ticks before a gain change')
+    # Raising P pulls an offset joint toward its goal. 8 ticks allows the 7 ticks
+    # of self-supported sag measured November2, so trials can start hands-off;
+    # that pull is a few ticks and the post-update pose check below still applies.
+    if abs(initial['3']['goal']-start)>8:
+        raise ValueError('ID3 requires holding goal within8ticks before a gain change')
     settings={name:read_byte(sdk,ph,pk,addr) for name,addr in [('P',21),('D',22),('I',23),('lock',55)]}
     if settings!={'P':16,'D':32,'I':0,'lock':1}:
         raise ValueError('Expected original ID3 P16/D32/I0 with lock1; no writes sent')
@@ -103,11 +105,11 @@ def control(sdk, ph, pk, group, expected, trial_p, path=RECOVERY, action='trial'
             'start_raw':start,'restoration':{'verified':True,'writes_needed':False}}
     protected_attempt=False
     try:
-        if trial_p==24:
-            write_record(path,group['port'])
+        if trial_p!=16:
+            write_record(path,group['port'],trial_p)
             protected_attempt=True
             write_byte(sdk,ph,pk,55,0)
-            try:write_byte(sdk,ph,pk,21,24)
+            try:write_byte(sdk,ph,pk,21,trial_p)
             finally:write_byte(sdk,ph,pk,55,1)
         # Check P, pose and all six joints again after applying the gain.
         if read_byte(sdk,ph,pk,21)!=trial_p:raise RuntimeError('Trial P not verified')
@@ -143,7 +145,7 @@ def control(sdk, ph, pk, group, expected, trial_p, path=RECOVERY, action='trial'
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--p',type=int,choices=[16,24],default=16)
+    parser.add_argument('--p',type=int,choices=[16,24,32],default=16)
     parser.add_argument('--action',choices=['trial','restore'],default='trial')
     parser.add_argument('--expected-positions',default='{}')
     args=parser.parse_args()
