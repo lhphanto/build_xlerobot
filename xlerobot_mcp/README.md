@@ -2,6 +2,42 @@
 
 A local HTTP MCP service wraps the robot scripts as named tools. It binds only to `127.0.0.1:8765`, requires a random bearer token, and rejects browser Origin headers. The operator launches it in Terminal and explicitly connects the client. This is a separate permissioned integration: it does not grant the chat shell camera/serial access. Hardware permissions still need to work for the service process. No public tunnel is needed.
 
+## Current capabilities (November 25, 2026): read this first
+
+The sections after this one are a dated commissioning log; where they disagree with this section, this section is
+current. Agents operate the robot through this server (`client.py call <tool> --arguments JSON`), never by opening the
+serial bus or camera themselves.
+
+**Operating rules (from the operator, standing):** no robot motion without the operator's explicit go for that motion
+or a clearly bounded sequence; never bypass a safety gate (e.g. `nudge_joint` refuses the commissioned left arm: use
+the reach tools); never print `.private/token`; the operator starts/restarts the server (code changes need a restart);
+a failed or uncertain motion is not retried blindly: read `joint_status` first. Release torque only with the arm
+supported by the operator.
+
+**What works now**
+
+| Area | Tools / scripts | State |
+|---|---|---|
+| Camera | `camera_snapshot` | Continuous ffmpeg stream (`controllers/camera_stream.py`); the first snapshot waits ~30 s for exposure/white balance (earlier frames are yellow), later ones ~3 s; stream stops after 30 idle min |
+| Stereo depth, camera-to-arm calibration | `reach_point.py --pixel U V --image F` (repo root) | Valid only with the neck at the calibration pose (pan 2012/tilt ~2287, within 6 ticks; `samples/hand_eye/handeye_result.json`) |
+| Neck | `neck_hold`, `nudge_joint` (neck, <=32 ticks) | Torque can be off after a restart/idle: `neck_hold` with fresh positions (request_id must be a UUID) holds in place, no travel (`step.py hold`/`view` do it). Tilt ID8 limits [1959, 2356] (higher = down; 2350 shows the basket); pan ID7 [1977, 2139] (+ = right) |
+| Left arm holding | `left_arm_hold` hold / recover-hold / release | recover-hold accepts only the elbow up to 32 ticks past its limit |
+| Left arm motion | `preview_left_reach` then `move_left_reach` (same args + plan_hash) | Gripper point to [x, y, z] in the left arm base frame (x forward, y left, z up; operator's "right" = -y). `top_down` with `approach_tilt_deg` 0-90 and optional `jaw_yaw_deg` (jaw line, mod 180) or free roll; <=400 ticks per joint per move |
+| Left gripper | `left_gripper_open`, `left_gripper_close` (squeeze 0-24), `left_gripper_tighten` | Open target 2162 (~88 mm). Grip push = holding - goal ticks: >=7 holds a juice box, 4 dropped it. Grip depth matters more for a tall box: 2 cm let it twist (Nov25); plans now grip 3.5 cm deep and squeeze twice |
+| Base | `move_base`, `base_status`, `stop_base` | Short pulses only (<=0.5 s); base power fault open |
+| Right arm | holding/trial tools | Commissioning only; no task motion yet |
+
+**Pick-and-place skill (left arm):** `../grasp/` — SlimSAM segmentation + Contact-GraspNet grasps + model-checked
+plans + `grasp/step.py`, one supervised step per go with a camera check after each. Runbook and lessons:
+`../grasp/README.md`. Succeeded with a juice box into the black basket on November23, November24 and November25
+(the last with no operator corrections).
+
+**Known limits:** grasp position has a camera/model bias (operator corrects ~15-20 mm toward -y; default offset
+-15 mm); the camera cannot see the object while the arm is between it and the lens (checks report UNSEEN); no
+collision checking against the scene; shoulder ID2 warms (~40 C after a carry; warn 50, stop 60); a loaded yaw can
+stall, and the loaded shoulder can end a few ticks past the 8-tick final tolerance (`move_left_reach` returns
+completed false, no error); step.py re-runs either once and accepts a finish within 16 ticks.
+
 ## One-time setup
 
 ```sh
@@ -30,7 +66,7 @@ Stop the mock server with Ctrl+C, close Photo Booth and other teleop programs, t
 ./start.sh
 ```
 
-Now ask for `joint_status` or `camera_snapshot`. Starting the service alone does not open hardware. Read tools open hardware only when called. Camera capture uses a 5-second warm-up and 180-degree rotation. It returns a fresh side-by-side image directly through MCP. macOS may request camera permission for the host process; approve it only if expected. Hardware access must be verified here before claiming direct control works.
+Now ask for `joint_status` or `camera_snapshot`. Starting the service alone does not open hardware. Read tools open hardware only when called. Camera capture uses a continuous stream with a ~30 s first-use warm-up and 180-degree rotation (November24; originally a 5-second warm-up per capture). It returns a fresh side-by-side image directly through MCP. macOS may request camera permission for the host process; approve it only if expected. Hardware access must be verified here before claiming direct control works.
 
 ## Supervised movement
 
@@ -59,13 +95,13 @@ Each intentional movement needs a fresh UUID `request_id`. Reusing an ID is reje
 
 Arm/neck `commissioned` flags remain false. A completed neck test does not automatically mark a joint commissioned; observe its axis/direction first. No tool edits calibration, enables arbitrary arm torque, runs a shell command, or accepts an arbitrary serial port. `test_neck_pan` is deliberately separate from ordinary nudges and can move physical hardware only in motion-enabled mode.
 
-`robot_config.json` is the authoritative configuration shared with the installed skill. Do not overwrite it with old observations. Actual commands always read fresh state. Recorded joint travel limits are not collision-free envelopes. Right-arm ID5's full 0–4095 range still requires review; four arm joints were outside stored limits at the latest user readback. No autonomous grasping, IK, calibrated depth, or continuous collision avoidance is implemented.
+`robot_config.json` is the authoritative configuration shared with the installed skill. Do not overwrite it with old observations. Actual commands always read fresh state. Recorded joint travel limits are not collision-free envelopes. Right-arm ID5's full 0–4095 range still requires review; four arm joints were outside stored limits at the latest user readback. (November24: supervised IK reaches, calibrated stereo depth and a step-by-step grasp skill now exist, see the capabilities section; there is still no autonomous unsupervised grasping or continuous collision avoidance.)
 
 ## Stop limitations
 
 Software cleanup is best effort. A USB disconnection, host crash, killed process, blocked SDK call, or power fault can prevent stopping. There is no verified firmware watchdog or hardware emergency-stop integration. Keep physical cutoff accessible. Do not unplug the service as a substitute for a stop command. After joint movement, torque remains enabled to support the load. If a controller is unresponsive, the service does not start a competing serial writer; use physical intervention as needed.
 
-The wrapper's base/joint/neck subprocesses contain finite movement logic. The MCP request timeout also requests interruption, but it cannot guarantee cleanup if hardware/SDK is unresponsive. Stopping the server does not guarantee a physical stop. This initial implementation opens the camera for every capture; a persistent camera worker can be added after end-to-end commissioning.
+The wrapper's base/joint/neck subprocesses contain finite movement logic. The MCP request timeout also requests interruption, but it cannot guarantee cleanup if hardware/SDK is unresponsive. Stopping the server does not guarantee a physical stop. Since November24 the camera runs as a persistent stream worker (`controllers/camera_stream.py`) rather than opening per capture.
 
 ## Tests
 
@@ -413,3 +449,113 @@ Live right start pose (encoder results; operator confirmation pending): downward
 Rejection prompts: pickup request refused, "go over there" sent back for direction/distance/clearance, "move the right arm up" declined (right arm not qualified); no motion in any. Scripted left-arm stop (48a9899a): stop_active sent 8.4 s after a 20 mm lift started (1.5 s after measured preview planning time), landing mid-motion (wrist 2150 to 2130, model 4.9 mm). Lift returned interrupted 0.2 s later; holds acknowledged at shoulder 849 / elbow 2787 / wrist 2130; all six holding and stationary, elbow 3 ticks off. A typed "stop" in chat arrives too late for these short moves; the physical cutoff remains the emergency stop.
 
 Base, same day: an on-floor 0.5 s backward pulse (f6be43c3) drove only the right wheels, then two stop_base attempts did not reach wheels 9 and 10 (comm -6); the operator cut power. Idle bus 2,000 reads with no failures; lifted pulses (36418d5d, 47f14aab) and a 0.3 s floor pulse (d271ba7e) were all normal. Wheel 10 sometimes returns implausible values (41 °C dropping to 32 °C). Battery was about 10%. Leading hypothesis: supply sag under floor load, possibly with a marginal wheel-10 connection.
+
+## Left reach to a point — November16
+
+`preview_left_reach(expected_positions, target_m)` and `move_left_reach(expected_positions, target_m, plan_hash, request_id)` move the left gripper frame to `target_m = [x, y, z]` meters in the left arm base frame (SO101 model: x forward, y left, z up). Position-only IK on IDs 1–4 (yaw, shoulder, elbow, wrist flex) with the left kinematic calibration; wrist roll and gripper are held. A small orientation weight left targets 5–17 mm short because a 5-joint arm cannot keep its attitude while translating, so orientation is free. Refused when: target outside x 0.08–0.45, y −0.30–0.30, z −0.10–0.45; IK misses by more than 5 mm; any joint would travel more than 400 ticks; any target is outside saved limits; or the modeled path sags more than 2 cm below its lower end. Execution reuses the start-pose controller (`left_start_pose.execute`) with IDs 1–4, speed 30, 16-tick stages, a live modeled-gripper envelope of the straight start-to-target box plus 3 cm, sampled stillness, one bounded end correction, final within 8 ticks, and hold on failure without retry. The start-pose controller now takes per-arm travel, envelope and packet settings; left and right start poses keep their old values.
+
+`../reach_point.py` (read-only) turns a raw left-half pixel into a target: fisheye-rectified SGBM (256-px search, about 14 cm minimum depth; matches at the search limit are refused), camera-to-arm calibration v1, a hover offset above the point (default 5 cm), and optionally `--preview`. It refuses if the neck has moved more than 6 ticks from the calibration pose. Validation on the 8 hand-eye images: the marker centre's stereo position agreed with its ArUco position within a median 2.9 mm (1–4 mm at 17–27 cm, 8–16 mm at 38–46 cm). With the earlier 128-px search, close points either failed or matched wrongly (121 mm error).
+
+6 reach tests (real SO101 model), the start-pose suites and the mock MCP integration pass. Not yet run live; needs a server restart and explicit supervision. Positions inherit about 1 cm uncertainty from the arm model and calibration, so targets keep a hover offset.
+
+First live reach (November16, request 28ea6db3): target from `reach_point.py` on a soda can (pixel 986,935 in the left half; stereo depth 0.444 m with 100% valid disparity nearby; arm-base point 0.313, −0.171, −0.014 m), hover 15 cm above the label point (planned about 9–10 cm above the can top, can height estimated). 21 stages, gripper sweep 14.4 cm sideways; completed with final errors of 4 ticks or less, voltage 11.9–12.0 V. Operator: gripper mostly centred over the can, about 8 cm above its top, so the height was about 1–2 cm lower than planned, consistent with the ~1 cm chain estimate. Earlier attempts were correctly refused for shoulder travel above 400 ticks when the can sat 36–44 cm out, at the edge of reach.
+
+Lower approach (request 1ede1ac2): 4.8 cm straight down to z 0.086 m, 7 stages, final errors of 3 ticks or less. Target was 30 mm above the can top using the measured gap; operator measured about 35 mm, centred, so about 5 mm repeatability near this spot.
+
+## Left gripper open / close — November16
+
+`left_gripper_open(expected_positions, target, request_id)` and `left_gripper_close(expected_positions, request_id, squeeze=12)` (`controllers/left_gripper_grip.py`) write only ID6 at speed 30, with all six joints already holding. Positive ticks open. Open: one command to a raw target above the current position, at most 700 ticks away and within saved limits; if the jaw stops short it is reported as blocked and held where it stopped. Close: 16-tick steps until the jaw stalls (stops short of the step) or present load (reg 60, masked to magnitude) reaches 300; then it holds `squeeze` ticks (0–24) past the contact point, so grip force is bounded by P × that offset. With nothing in the jaws it stops 8 ticks before the closed limit and reports no contact. Every sample checks voltage, temperature, mode and torque on all six, ID6 goal and limits, and that no other joint moves more than 8 ticks or has its goal changed. On any failure it holds ID6 at its present position. 8 simulated tests and the mock MCP integration pass; not yet run live. First live open (request 866ba018, empty, +250 target): opened smoothly at about 50 ticks/s with free-motion load 28–52, but the fixed 3 s settle timeout ended it at +148 and cleanup held ID6 at 1912. The settle timeout now scales with distance (2 s + 1.25 × distance / 50 ticks/s); a 700-tick simulated open at the measured rate passes. Load threshold 300 has a wide margin over free motion.
+
+First live empty close (request 483d8cb0): closed from 2061 to the floor goal 1461 (8 ticks above the 1453 limit), ending at 1463 with load 24 and no contact reported; the operator saw the jaws stop where they meet, so the floor sits at the closed point. It took about 105 s for 600 ticks, longer than the client's 65 s HTTP timeout, so the reply was lost while the server finished normally. The client timeout is now 135 s, above the longest tool timeout. Gap at 2061 measured about 70 mm.
+
+Centering on the can (November16): operator saw the can 20 mm off-centre toward the jaw away from the laptop. A lift–shift–lower (request 6175a4cc) stopped at stage 1: the shoulder (ID2) stayed 14 ticks behind a 16-tick upward step in this extended, lowered pose (gravity), so the controller held without a next waypoint. ID2's goal was then set to its present position with a one-off write (goal 2163, settled 2167), and a direct 2.2 cm shift away from the laptop at the same height completed (request de3c0ff0, final errors of 5 ticks or less; the near jaw moves away from the can and the far jaw ends about 11 mm from it). Holding afterwards, the shoulder sits about 10 ticks below its goal, which the shared 8-tick preflight refused. Reach and gripper tools now allow the shoulder the elbow's 16-tick holding sag, stage tolerance and correction limit (`goal_tolerance` per arm in `left_elbow_test.validate`; other tools keep 8). Lifting under load still needs a shoulder gravity bias before carrying anything.
+
+5 mm centering shift (request 55c7adb6, 2 stages, final errors of 4 ticks or less) left the yaw 10 ticks from its trimmed goal, and the next preview was refused. Design fix: a completed move may leave goal = target ± max_goal_offset with position within FINAL_TOLERANCE (8) of target, so the reach and gripper preflight now accepts exactly that holding offset: yaw and wrist 16, shoulder and elbow 24 (`left_reach.GOAL_TOLERANCE`). Joints must still be stationary with torque on and within limits; wrist roll and gripper keep 8, and all other tools keep their limits. Tested at each boundary.
+
+Second grasp attempt (November16): the first close (request ad3c8b39) stopped on a single corrupt ID1 temperature sample (77 C; 31 C on re-read); the gripper had closed to 1769 (~35 mm) with no contact load because the jaws were about 2.8 cm behind the can's centre and the fixed (right) jaw slid around it. The gripper tool now re-reads a suspicious voltage/temperature before stopping (another ID1 sample read 63/32 on the next open) and keeps the first and latest 80 trace samples. The operator also saw the jaws tilted; the model gave −25° (movable jaw lower). `level_jaws` (preview/move_left_reach) picks the wrist roll nearest the current one that makes the jaw line horizontal (within 2°), re-solves IDs1–4 with it, and moves ID5 in the same staged move (roll then holds up to 16 ticks like yaw and wrist). Here: roll 3542 → 3186. A 2 cm back-off (request 41c662ef) stopped at stage 2 with the shoulder 20 ticks behind (P32 everywhere, load only 5–12%): a joint holding the extended arm uses most of a 16-tick step just to hold. Reach moves now give lagging joints a bounded lead: after 0.6 s outside tolerance, the goal moves 8 ticks per 0.3 s further toward the waypoint, up to 32 (shoulder) or 16 (elbow); 4 s stage limit; any lead beyond the end-correction bound is withdrawn before the final settle. Start-pose tools are unchanged. Simulated with a shoulder that only lifts once its goal is 18 ticks ahead: fails without the lead, completes with it.
+Back-off retry (request f97eabdd): the shoulder now kept up (lifted 34 ticks, 12 behind), but the yaw stopped 11 behind at stage 3 (friction with the arm extended; it had also finished 10 off on an earlier shift). The lead now covers every reach joint: yaw, wrist and roll 16 ticks, shoulder 32, elbow 16. Failure results include the leads tried.
+Back-off third try (request cdc512a4): leads worked (4 used, max 8) but the move stopped on an ID1 temperature sample of 110 C. At rest, 200 quick reads gave 29–30 C, 120–121 voltage, no comm errors and a clear status register, so the bad samples (77, 63, 110) appear only during motion. The staged controller (reach and start-pose tools) now confirms an out-of-range voltage/temperature with a fresh read before stopping and reports `glitches`; a sustained bad value still stops the move. Tested both ways.
+Shift retry (request 9a63b30c): yaw stopped 9 behind at stage 2 with its 16-tick lead used, nothing touching (operator); yaw lead cap raised to 32.
+
+Grasp attempt end of day (November16): after the yaw lead (32), a 15 mm right shift with 1.4 cm up completed its stages (request 20677d62; ID1 temperature glitch 110 → 33 re-read and continued; shoulder ended 9 ticks low, a reported miss by 1 tick), then forward 4.5 cm (dc192bbb), down (b25cf507, 7 mm modeled), tip 13 mm lower at the same angle (5f54a61c) and 5 mm more forward (cc0de16d), all within 6 ticks with jaws level (−0.1°). The close (request e851a78b) ran to the floor (1463, load 24) with no contact: the can slipped out again. The client got an empty error, most likely the server's 120 s tool timeout, since a full close (~700 ticks) takes about that long.
+
+### Open items for the next session
+- Grasp geometry: twice now the jaws closed and slid around the can. The pinch point is probably too far back relative to the can's centre (and/or at the jaw tips); the operator suggests going further forward so the object sits deeper between the jaws. Try an easier object first (box-shaped, light, textured).
+- Gripper close speed: 16-tick steps take ~105–120 s for a full close, at the server's 120 s limit. Use larger steps while the load stays at free-motion levels (24–52), or start the close from just outside the object.
+- Shoulder end correction: capped at 16 ticks but it needs about 22 to hold the extended arm, so moves end 9–10 ticks low and report a miss. Raise the shoulder `max_goal_offset` for reach (and `GOAL_TOLERANCE` to match).
+- Optional wrist-only step in the reach tool, for a steeper gripper angle (position-only IK keeps the angle).
+- `nudge_joint` refuses the left arm ("pending port verification and safe joint commissioning"); deliberately not bypassed.
+- Lifting with a load: not attempted yet; bounded leads now make an empty arm lift.
+
+
+## Top-down reach mode November23
+
+`preview_left_reach` / `move_left_reach` take `top_down=true`, optional `jaw_yaw_deg` and `approach_tilt_deg` (0–90, default 0; 90 = pointing horizontally outward). Instead of position-only IK on IDs1–4, a bounded least-squares solve over IDs1–5 (scipy, inside the saved safe limits, seeded from the current pose and ±180° of roll, least-travel valid solution kept) puts the gripper frame at the target within 5 mm with:
+- the approach (gripper frame z, out past the fingertips) within 3° of straight down, or leaned `approach_tilt_deg` away from the arm base along the target's bearing (the only lean a 5-joint arm can make);
+- if given, the jaw-closing line (gripper frame x) within 3° of `jaw_yaw_deg` in the arm frame (about z); either jaw order counts, so 62 and 242 are the same request and the same plan hash.
+
+The staged controller then moves IDs1–5 as for `level_jaws` (which cannot be combined with `top_down`). Checks added: any joint needing over 400 ticks is refused with "step there through a larger approach_tilt_deg first"; when the move starts already pointing, every stage must stay within 10° of the worse end (a descent stays pointing). The plan reports `pointing` (requested tilt, approach and jaw-line errors, path maximum) and its hash binds top_down, tilt and the jaw line. LeRobot's placo IK was not usable for this: with an orientation weight it landed 2–30 cm off and ignored joint limits.
+
+Model limits on the November23 standing box (Contact-GraspNet grasp at (0.286, −0.127, 0.023), jaw line 62°, ~0.31 m from the base): straight down is refused 3 cm above it (wrist flex would pass 3147); 5–25° lean works at both hover and grasp height, 15° keeps the wrist well inside its range. From the November16 approach pose (2302/2022/2088/1940/3542) the 15° hover needs ~900 ticks of wrist flex, so step 45° → 30° → 15° (each ≤400 ticks; tested). Then descend at the same tilt and jaw line.
+From the rest pose after recover-hold (2186/1050/2789/1820/3188, gripper pointing ~horizontally forward, 97° from down) even 45° needs 863 shoulder ticks, so the cap is 90° and the tested chain is (0.25, −0.10, 0.14) at 85° → (0.26, −0.11, 0.12) at 65° → (0.27, −0.115, 0.10) at 45° → (0.28, −0.122, 0.075) at 30° → hover (0.286, −0.127, 0.053) at 15°, jaw line 62°, largest step 356 ticks.
+
+Grasp workflow (perception in the separate `contact_graspnet` conda env, scripts kept in the session scratchpad): snapshot → SlimSAM mask from one or two clicks → Contact-GraspNet on rectified SGBM depth → arm-frame grasps filtered for top-down/in-plane lean and width → top-down reach to hover, descend, `left_gripper_close`. Contact-GraspNet's grasp centre is for the Panda gripper's pads (10.3 cm from its base); here the target is the SO101 gripper frame point near the fingertips, so aim it about 1–2 cm below the box top.
+
+
+## Direct small grip adjustment November17
+
+`left_gripper_tighten(expected_positions, request_id, ticks=2)` is a separate supervised contact-hold adjustment, not another close-to-contact search. Operator must first visually confirm both gripping faces touch the object. It commands ID6 once to current feedback minus1–4ticks (default2, about0.18servo degrees). It never performs the old16tick discovery step. This is an angular target offset, not calibrated millimeters or force, and does not guarantee against crushing or establish a secure grip.
+
+All six joints must already hold stationary with fresh expected positions, saved limits, normal power/temperature and unchanged other-joint goals. Gripper existing goal error must be at most2ticks and the new target must actually be farther closed than that goal. Target stays8ticks above the closed limit. Refuses initial raw load>=150 and stops/holds feedback if monitored load reaches150, gripper leaves target−2 through start+2, another joint drifts>8ticks, power/state checks fail or execution is interrupted. Requires three stationary samples within2seconds. No gain, torque-mode or EEPROM changes; no automatic retry, release, lift or additional squeeze. Repeating with a new position can accumulate pressure; each new adjustment requires separate explicit scope and visual inspection.
+
+November17 physical checkpoint: an empty35mm box was approached and lowered around; operator confirmed both faces touching, centered and unbent after zero-extra-squeeze close. Contact was a5tick stall at1739 with load48; handoff goal1739 reduced holding load to0, so grip security remains unverified. No tightening or loaded lift has been sent.
+
+
+## Reach support offset correction November17
+
+The first5mm loaded box test failed (request86ab013e): shoulder target2405, position2414, goal2390; the9tick miss exceeds8. Model net rise was0.02mm, with a2.93mm transient dip. Operator confirmed box stayed resting, centered and unbent; no basket transfer/release/retry was sent. Normal voltage and temperature do not prove loaded power qualification.
+
+`left_reach_v2` retains each active joint's measured initial goal-minus-position offset through its staged targets, capped by the existing end-correction profile. Shoulder end-offset cap is now32ticks (was16); yaw/wrist/roll8 and elbow16 remain unchanged. Goal-error preflight for reach and gripper tools matches endpoint offset plus8ticks: shoulder40, elbow24, yaw/wrist/roll16. Other commissioning tools keep their original checks. If a small upward move starts with support offset beyond its cap, preview rejects before writes rather than dropping that support. Start-pose tools do not preserve offsets and retain their old correction limits.
+
+Near-vertical upward reaches of4–21mm (lateral<=2mm) additionally require final encoder-model rise of at least half the modeled requested rise, alongside the unchanged8tick per-joint completion criterion. Below-floor progress reports failure without automatic retry/return/release; no tolerance widening to call zero rise successful. Preview hash includes offsets, correction bounds and final progress floor; policy is versionedv2. One bounded end trim,16tick waypoints,400tick per-request travel, speed30, saved position limits and runtime power/fault/position envelopes remain. No gripper writes during reach, no PID/EEPROM/calibration changes. This does not prove object retention or collision-free transfer; operator visual lift/placement checks remain necessary.
+
+### First pick-and-carry November23
+Standing juice box (~5.5 × 3.5 × 13.6 cm), all moves top-down mode with operator go per step:
+- Reorientation from the rest pose: five steps 85° → 15° (requests e78a487c … bf7b0775), all within 2 ticks, no leads. Operator corrected the camera-derived grasp by 20 mm toward −y (e.g. Contact-GraspNet (0.286, −0.127) → (0.286, −0.147)); the same −20 mm was applied to the second grasp and the operator found it centred.
+- Attempt 1: fingertips ~1 cm below the top, squeeze 12 (contact 1748 by stall, held 1740, push 4 ticks, load 40). Lifted 3 cm and 6.8 cm, then the box dropped during the next lift.
+- Attempt 2: (0.322, −0.184, 0.01) at 30°, jaw line 75°, ~2 cm below the top, squeeze 24 (contact 1760, held 1745, push 9 ticks, load 60). Carried: lifts to z 0.04/0.10/0.15 (30°→35°→40°); shoulder holding offset 22 empty → 28–30 with the box. Carry back 15 cm / right 7 cm to (0.17, −0.25, 0.15) at 30° with free roll: first try stopped at stage 6 (request 81a5cde4, yaw 15 behind with its 32-tick lead; one bogus ID1 150 °C sample re-read 31); retry from the held pose completed (918dc49e, 20 leads). Lowered 3 cm and opened over the basket (c97bf533, 4899adc3): the box landed in the basket (operator confirmed). Release was ~2–3 cm above rim height in the model; the operator would go a little lower next time.
+- Shoulder temperature climbed 31 → 49 °C while holding the extended loaded arm (worst at z 0.15, elbow folded to 884); eased to 47 °C after carrying back. Rest the arm between attempts.
+- Next: yaw lead above 32 (or slower yaw stages) for loaded carries; jaw centre offset for the SO101 gripper instead of the operator's 20 mm correction (check whether it is camera calibration or grasp geometry); a basket/drop-zone detector instead of two depth points on its rim.
+- Scripted from this run: `grasp/` (runbook `grasp/README.md`): perception (SlimSAM + Contact-GraspNet), grasp and basket planners, one-step executor with camera checks after every step, and grasp retry. Supporting tool change: reach and gripper preflights now accept the gripper holding up to its squeeze (goal up to 24 ticks past position; was 8), because a 24-tick squeeze leaves ~9 and the lift, open or re-close must still start. Tests: `test_left_reach` (21), `test_left_gripper_grip` (16), `grasp/test_planners.py` (2). Restart the server before the next run.
+
+## Neck tilt and camera stream November24
+- Tilt (ID8) upper limit raised 2295 → 2356 after a supervised tilt-only test session (`neck_test_session` in robot_config.json, now closed): 2289 → 2318 → 2348 with `test_neck_joint`, no faults, 31 °C; the operator saw the basket rim from 2318 and stopped at 2348, then it returned to 2291. 2350 is the basket view pose (visual only); depth and arm-frame positions still need the 2287 calibration pose. `grasp/step.py view` (default `--tilt-to 2350`) tilts down, snapshots and returns within 6 ticks.
+- Camera: `camera_snapshot` now reads a continuous stream (`controllers/camera_stream.py`; ffmpeg keeps the camera open and writes the latest upright frame twice a second with an atomic rename). Cold 5 s captures were very yellow: red/blue 7–26 at 8–9 s after opening, settling with brightness at about 23 s (red/blue 1.64). The first snapshot after the stream starts waits 30 s plus a colour/brightness stability check (~32 s); later snapshots take ~3 s. The stream stops after 30 idle minutes; `python controllers/camera_stream.py status|stop`. `camera_capture.py --no-stream` keeps the old cold capture. Restart the server for the new tool timeout (100 s) and description.
+
+## Grasp skill lessons November24
+
+Second supervised pick-and-place (juice box into the basket), and the changes made in `../grasp/` from it:
+- The held box pivots in the jaws and hangs straight down; the planners had modelled it along the 30-40 deg lean, ~6 cm
+  too far out, which is why the operator swung servo 1 back and retracted 5 cm over the basket. Model fixed (camera
+  depth confirmed on three lifts); the basket default drop is now the point that worked, gripper over (0.18, -0.20).
+- Release lower: object bottom 1 cm below the rim (was 1 cm above); the empty gripper lifts 5 cm before the camera view.
+- Grasp choice prefers grasps within 1 cm of the object's footprint centre (the top score sat on a corner); offset
+  default -15 mm (operator's correction this time).
+- Camera checks try several seeds and ignore the arm; UNSEEN (hidden) no longer stops a run, CHECK still does.
+- `step.py adjust` for operator corrections (right/left/forward/back/up/down/retract/extend cm, swing-left/right deg),
+  keeping lean and jaw line; `ready` works from a grasp hover (step-growing chain); `hold`/`ready` warm the camera
+  first; a stalled loaded reach is re-run once; `open` skips when already open.
+
+## Grasp skill lessons November25
+
+Third supervised pick-and-place (juice box into the basket), the first with no operator corrections: the November24
+vertical-hang carry, drop point (0.18, -0.20) and 1-cm-below-rim release worked as planned. Changes in `../grasp/`:
+- The box twisted and slipped in the jaws during the carry with a 2 cm grip (push 11, holding load 84), so the grasp
+  plan now grips 3.5 cm below the top (`--grip-depth`; the gripper point is at the fingertips) and adds a second
+  squeeze step after the close.
+- The test lift returned completed false with the loaded shoulder 9 ticks off (tolerance 8, no error); `step.py` now
+  re-runs such a reach once and accepts a finish within 16 ticks (the camera check still decides). The stall retry
+  also looked at the camera-check log line instead of the reach's and could not fire after a checked step; fixed.
+- The neck torque was off at the basket view; `step.py hold` and `view` now call `neck_hold` in place when it is off.
+- One false camera CHECK in the carry (mask on the box top only); over the basket the camera sees only a sliver of
+  the box, so the operator's eyes decide before the drop.

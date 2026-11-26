@@ -1,0 +1,256 @@
+{
+ "frame": "/Users/huiliu/Documents/build_xlerobot/samples/grasp/robot-camera-1795500781301572000.png",
+ "mask": "/Users/huiliu/Documents/build_xlerobot/samples/grasp/robot-camera-1795500781301572000_mask.npy",
+ "object": {
+  "desk_z": -0.0973,
+  "top_z": 0.0343,
+  "height": 0.1332,
+  "x": [
+   0.297,
+   0.348
+  ],
+  "y": [
+   -0.185,
+   -0.153
+  ],
+  "centre_xy": [
+   0.301,
+   -0.169
+  ],
+  "points": 8273,
+  "desk_fit_mm": 2.7
+ },
+ "grasps": [
+  {
+   "score": 0.2778162360191345,
+   "width_mm": 56.63827061653137,
+   "down_deg": 3.60941837640866,
+   "out_of_plane_deg": 2.9223705951178243,
+   "reachable": true,
+   "centre": [
+    0.321,
+    -0.163,
+    0.029
+   ],
+   "approach": [
+    -0.01,
+    0.062,
+    -0.998
+   ],
+   "jaw_axis": [
+    0.061,
+    0.996,
+    0.061
+   ],
+   "jaw_yaw_deg": 86.5
+  },
+  {
+   "score": 0.23550459742546082,
+   "width_mm": 64.58262354135513,
+   "down_deg": 11.49704773461116,
+   "out_of_plane_deg": 11.434337850056494,
+   "reachable": true,
+   "centre": [
+    0.322,
+    -0.158,
+    0.018
+   ],
+   "approach": [
+    -0.106,
+    -0.169,
+    -0.98
+   ],
+   "jaw_axis": [
+    0.741,
+    0.644,
+    -0.191
+   ],
+   "jaw_yaw_deg": 41.0
+  },
+  {
+   "score": 0.20942158997058868,
+   "width_mm": 64.58262354135513,
+   "down_deg": 17.74632245530404,
+   "out_of_plane_deg": 13.079072445461797,
+   "reachable": true,
+   "centre": [
+    0.31,
+    -0.157,
+    0.023
+   ],
+   "approach": [
+    0.284,
+    0.109,
+    -0.952
+   ],
+   "jaw_axis": [
+    0.278,
+    0.941,
+    0.191
+   ],
+   "jaw_yaw_deg": 73.5
+  },
+  {
+   "score": 0.20679034292697906,
+   "width_mm": 48.69392141699791,
+   "down_deg": 13.47070172358764,
+   "out_of_plane_deg": 13.469412631846396,
+   "reachable": true,
+   "centre": [
+    0.329,
+    -0.168,
+    0.025
+   ],
+   "approach": [
+    -0.103,
+    -0.209,
+    -0.972
+   ],
+   "jaw_axis": [
+    -0.003,
+    0.978,
+    -0.21
+   ],
+   "jaw_yaw_deg": 90.2
+  },
+  {
+   "score": 0.20490337908267975,
+   "width_mm": 56.63827061653137,
+   "down_deg": 11.056969803071565,
+   "out_of_plane_deg": 0.4686700958469339,
+   "reachable": true,
+   "centre": [
+    0.324,
+    -0.164,
+    0.025
+   ],
+   "approach": [
+    0.167,
+    -0.094,
+    -0.981
+   ],
+   "jaw_axis": [
+    0.24,
+    0.969,
+    -0.052
+   ],
+   "jaw_yaw_deg": 76.1
+  },
+  {
+   "score": 0.18704736232757568,
+   "width_mm": 56.63827061653137,
+   "down_deg": 17.7800870005047,
+   "out_of_plane_deg": 7.272009994778374,
+   "reachable": true,
+   "centre": [
+    0.318,
+    -0.16,
+    0.032
+   ],
+   "approach": [
+    0.191,
+    -0.238,
+    -0.952
+   ],
+   "jaw_axis": [
+    0.591,
+    0.803,
+    -0.082
+   ],
+   "jaw_yaw_deg": 53.6
+  },
+  {
+   "score": 0.17099690437316895,
+   "width_mm": 56.63827061653137,
+   "down_deg": 11.379398851813809,
+   "out_of_plane_deg": 3.4224229017727583,
+   "reachable": true,
+   "centre": [
+    0.318,
+    -0.162,
+    0.032
+   ],
+   "approach": [
+    0.195,
+    -0.032,
+    -0.98
+   ],
+   "jaw_axis": [
+    0.206,
+    0.979,
+    0.009
+   ],
+   "jaw_yaw_deg": 78.1
+  },
+  {
+   "score": 0.1691935956478119,
+   "width_mm": 72.5269690155983,
+   "down_deg": 7.716517200810415,
+   "out_of_plane_deg": 7.473965865933596,
+   "reachable": true,
+   "centre": [
+    0.336,
+    -0.152,
+    0.02
+   ],
+   "approach": [
+    -0.023,
+    -0.132,
+    -0.991
+   ],
+   "jaw_axis": [
+    0.997,
+    0.067,
+    -0.032
+   ],
+   "jaw_yaw_deg": 3.8
+  },
+  {
+   "score": 0.16819855570793152,
+   "width_mm": 48.69392141699791,
+   "down_deg": 4.993984538349186,
+   "out_of_plane_deg": 4.607785723424765,
+   "reachable": true,
+   "centre": [
+    0.319,
+    -0.166,
+    0.03
+   ],
+   "approach": [
+    -0.007,
+    -0.087,
+    -0.996
+   ],
+   "jaw_axis": [
+    -0.182,
+    0.98,
+    -0.084
+   ],
+   "jaw_yaw_deg": 100.5
+  },
+  {
+   "score": 0.1668320894241333,
+   "width_mm": 64.58262354135513,
+   "down_deg": 16.670895815535307,
+   "out_of_plane_deg": 14.20423227414156,
+   "reachable": true,
+   "centre": [
+    0.329,
+    -0.154,
+    0.023
+   ],
+   "approach": [
+    -0.238,
+    -0.16,
+    -0.958
+   ],
+   "jaw_axis": [
+    0.834,
+    0.471,
+    -0.286
+   ],
+   "jaw_yaw_deg": 29.5
+  }
+ ],
+ "note": "November23 second (successful) grasp frame, top 10 grasps; regression fixture for the planners"
+}

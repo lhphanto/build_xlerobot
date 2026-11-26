@@ -1,0 +1,12 @@
+__pycache__/
+.DS_Store
+.claude/
+
+# Robot data: frames, depth maps, calibration videos, SLAM recordings (GBs). The few small calibration results the
+# code reads (samples/calibration/calibration_fisheye.json, samples/hand_eye/handeye_result.json, ...) are added
+# with `git add -f`.
+samples/
+
+# Videos: share through a GitHub Release or a video site and link them from README.md (GitHub refuses files > 100 MB)
+*.mp4
+*.mov

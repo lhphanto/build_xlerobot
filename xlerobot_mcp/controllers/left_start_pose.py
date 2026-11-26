@@ -23,12 +23,12 @@ LIVE_MARGIN_M=.01
 def make_plan(group,states,expected,observer,arm=LEFT):
     """No hardware writes. Waypoints are desired positions from the measured pose to the arm's start."""
     START=arm['start']
-    et.validate(group,states,expected,0)  # All six holding and stationary, same preflight as the elbow tests.
+    et.validate(group,states,expected,0,arm.get('goal_tolerance'))  # All six holding and stationary, same preflight as the elbow tests.
     start={m:states[m]['position'] for m in START}
     for mid,target in START.items():
         lo,hi=group['joints'][mid]['safe_raw_limits']
         if not lo<=target<=hi:raise ValueError(f'Start pose ID{mid} outside saved limits')
-        if abs(target-start[mid])>MAX_TRAVEL:raise ValueError(f'ID{mid} is {abs(target-start[mid])} ticks from the start pose; above {MAX_TRAVEL}, reposition by hand with supported release')
+        if abs(target-start[mid])>arm.get('max_travel',MAX_TRAVEL):raise ValueError(f"ID{mid} is {abs(target-start[mid])} ticks from the target; above {arm.get('max_travel',MAX_TRAVEL)}, reposition by hand with supported release")
     largest=max(abs(START[m]-start[m]) for m in START)
     steps=math.ceil(largest/STAGE_TICKS)
     waypoints=[] if largest<=TRIM_ABOVE else [{m:int(round(start[m]+(START[m]-start[m])*step/steps)) for m in START} for step in range(1,steps+1)]
@@ -36,12 +36,22 @@ def make_plan(group,states,expected,observer,arm=LEFT):
     for point in waypoints:
         delta=observer({m:{'position':point.get(m,states[m]['position'])} for m in states})
         side=math.hypot(delta[0],delta[1])
-        if abs(delta[2])>MAX_HEIGHT_M or side>MAX_SIDE_M:raise ValueError('Modeled gripper travel exceeds the start-pose envelope')
+        if abs(delta[2])>arm.get('max_height_m',MAX_HEIGHT_M) or side>arm.get('max_side_m',MAX_SIDE_M):raise ValueError('Modeled gripper travel exceeds the start-pose envelope')
         modeled.append({'height_m':delta[2],'side_m':side})
+    offsets={}
+    if arm.get('preserve_hold_offsets'):
+        for mid in START:
+            cap=arm['max_goal_offset'][mid]
+            if arm.get('minimum_final_height_m') is not None and abs(states[mid]['goal']-states[mid]['position'])>cap:
+                raise ValueError(f'ID{mid} support offset exceeds the bounded small-lift correction; no writes')
+            offsets[mid]=max(-cap,min(cap,states[mid]['goal']-states[mid]['position']))
     identity={'policy':arm['policy'],'expected':expected,'targets':START,'waypoints':waypoints,'goals':{m:s['goal'] for m,s in states.items()},
+              'holding_offsets':offsets,'goal_offset_bounds':arm.get('max_goal_offset'),
+              'minimum_final_height_m':arm.get('minimum_final_height_m'),
               'limits':{m:group['joints'][m]['safe_raw_limits'] for m in sorted(group['joints'])}}
     return {'execution_policy':arm['policy'],'expected_positions':expected,'targets':START.copy(),'waypoints':waypoints,'modeled_gripper':modeled,
             'final_modeled_height_change_mm':modeled[-1]['height_m']*1000 if modeled else 0.,'already_at_start':not waypoints,
+            'holding_offsets':offsets,'minimum_final_height_m':arm.get('minimum_final_height_m'),
             'plan_hash':hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest(),
             'note':'Height is computed from the uncalibrated SO101 model. Negative means the gripper moves down; keep that space clear.'}
 
@@ -50,16 +60,23 @@ def execute(sdk,ph,pk,group,initial,p,observer,arm=LEFT):
     START=arm['start']
     if p.get('execution_policy')!=arm['policy'] or p.get('targets')!=START:raise ValueError('Unsupported start-pose plan; obtain a new preview')
     commands={m:s['goal'] for m,s in initial.items()};trace=[];recent={m:[] for m in START};attempted=set();cleanup={'attempted':False}
-    stage=0
+    stage=0;leads=[];glitches=[]
+    send=arm.get('packet',reach.packet)  # reach.packet only addresses IDs2-4
     def write(mid,target):
         attempted.add(mid);commands[mid]=target
-        reach.packet(sdk,ph,pk,int(mid),target)
+        send(sdk,ph,pk,int(mid),target)
     def monitor():
         states=ah.snapshot(sdk,ph,pk)
         for mid,s in states.items():
             baseline=initial[mid];lo,hi=group['joints'][mid]['safe_raw_limits']
-            if not 110<=s['voltage_present_raw']<=130 or s['temperature_raw']>=60:raise RuntimeError(f"Power or temperature unsuitable: ID{mid} voltage {s['voltage_present_raw']}, temperature {s['temperature_raw']}")
-            if s['model']!=777 or s['mode']!=0 or s['torque']!=1 or [s['min'],s['max']]!=[baseline['min'],baseline['max']] or not lo<=s['position']<=hi or not 110<=s['voltage_present_raw']<=130 or s['temperature_raw']>=60 or s['goal']!=commands[mid]:raise RuntimeError('Joint target/state/power changed during start-pose move')
+            if not 110<=s['voltage_present_raw']<=130 or s['temperature_raw']>=60:
+                # Single corrupt samples during motion (ID1 read 77/63/110 C; 29-30 C in 200 reads at rest, November16):
+                # confirm with a fresh read before stopping.
+                v,t=jc.read(sdk,ph,pk,int(mid),'voltage_present_raw'),jc.read(sdk,ph,pk,int(mid),'temperature_raw')
+                if not 110<=v<=130 or t>=60:raise RuntimeError(f"Power or temperature unsuitable: ID{mid} voltage {s['voltage_present_raw']}/{v}, temperature {s['temperature_raw']}/{t}")
+                glitches.append({'stage':stage,'id':mid,'voltage':s['voltage_present_raw'],'temperature':s['temperature_raw'],'reread':[v,t]})
+                s['voltage_present_raw'],s['temperature_raw']=v,t
+            if s['model']!=777 or s['mode']!=0 or s['torque']!=1 or [s['min'],s['max']]!=[baseline['min'],baseline['max']] or not lo<=s['position']<=hi or s['goal']!=commands[mid]:raise RuntimeError('Joint target/state/power changed during start-pose move')
             if mid in START:
                 a,b=p['expected_positions'][mid],START[mid]
                 if not min(a,b)-16<=s['position']<=max(a,b)+16:raise RuntimeError(f'ID{mid} escaped the start-pose window')
@@ -71,7 +88,7 @@ def execute(sdk,ph,pk,group,initial,p,observer,arm=LEFT):
             elif abs(s['position']-baseline['position'])>8 or s['moving']:raise RuntimeError('An untouched joint moved')
         delta=observer(states)
         if len(trace)<128:trace.append({'stage':stage,'positions':{m:states[m]['position'] for m in START},'goals':{m:commands[m] for m in START},'modeled_height_m':delta[2],'min_voltage_raw':min(s['voltage_present_raw'] for s in states.values())})
-        if abs(delta[2])>MAX_HEIGHT_M+LIVE_MARGIN_M or math.hypot(delta[0],delta[1])>MAX_SIDE_M+LIVE_MARGIN_M:raise RuntimeError('Modeled gripper left the start-pose envelope')
+        if abs(delta[2])>arm.get('max_height_m',MAX_HEIGHT_M)+LIVE_MARGIN_M or math.hypot(delta[0],delta[1])>arm.get('max_side_m',MAX_SIDE_M)+LIVE_MARGIN_M:raise RuntimeError('Modeled gripper left the start-pose envelope')
         return states
     def settle():
         # Sampled stillness as well as the flag: a sagging joint can keep creeping.
@@ -87,15 +104,33 @@ def execute(sdk,ph,pk,group,initial,p,observer,arm=LEFT):
         for stage,point in enumerate(p['waypoints'],1):
             monitor()
             for mid in START:
-                if point[mid]!=commands[mid]:write(mid,point[mid])
-            deadline=time.monotonic()+3
+                lo,hi=group['joints'][mid]['safe_raw_limits']
+                target=max(lo,min(hi,point[mid]+p.get('holding_offsets',{}).get(mid,0)))
+                if target!=commands[mid]:write(mid,target)
+            # Optional bounded lead (reach only): a joint holding against gravity uses most of a 16-tick step just
+            # to hold, so a lagging joint's goal is pushed further toward the waypoint, 8 ticks per 0.3 s, up to its cap.
+            lead=arm.get('lead',{});began=time.monotonic();deadline=began+(4 if lead else 3);pushed=began
             while time.monotonic()<deadline:
                 states=monitor()
                 if all(abs(states[m]['position']-point[m])<=arm['stage_tolerance'][m] for m in START):break
+                now=time.monotonic()
+                if lead and now-began>=.6 and now-pushed>=.3:
+                    pushed=now
+                    for mid,cap in lead.items():
+                        if mid not in START:continue  # e.g. roll when the jaws are not being levelled
+                        lag=point[mid]-states[mid]['position']
+                        if abs(lag)<=arm['stage_tolerance'][mid]:continue
+                        lo,hi=group['joints'][mid]['safe_raw_limits'];step=8 if lag>0 else -8
+                        command=max(lo,min(hi,max(point[mid]-cap,min(point[mid]+cap,commands[mid]+step))))
+                        if command!=commands[mid]:write(mid,command);leads.append({'stage':stage,'id':mid,'goal':command,'lead':command-point[mid]})
                 time.sleep(.05)
             else:
                 raise TimeoutError(f'Start-pose stage{stage} stopped: position-minus-waypoint ticks={ {m:states[m]["position"]-point[m] for m in START} }. No next waypoint attempted')
         stage=len(p['waypoints'])+1
+        for mid,target in START.items():
+            # Withdraw any lead beyond the end-correction bound so the hold matches what the next preflight accepts.
+            bound=arm['max_goal_offset'][mid]
+            if abs(commands[mid]-target)>bound:write(mid,max(target-bound,min(target+bound,commands[mid])))
         states=settle();trimmed={}
         # One feedback correction only: gravity moves the landing point by a pose-dependent amount.
         for mid,target in START.items():
@@ -106,7 +141,12 @@ def execute(sdk,ph,pk,group,initial,p,observer,arm=LEFT):
                 if command!=commands[mid]:write(mid,command);trimmed[mid]=command
         if trimmed:stage+=1;states=settle()
         errors={m:states[m]['position']-START[m] for m in START}
-        return {'completed':all(abs(v)<=FINAL_TOLERANCE for v in errors.values()),'final_errors_ticks':errors,'final_tolerance_ticks':FINAL_TOLERANCE,'trimmed_commands':trimmed,'plan':p,'states':states,'trace':trace,'torque':'left on',
+        height=observer(states)[2];floor=p.get('minimum_final_height_m')
+        progress_ok=floor is None or height>=floor
+        return {'completed':all(abs(v)<=FINAL_TOLERANCE for v in errors.values()) and progress_ok,
+                **({'error':'Insufficient upward model progress; no automatic retry'} if not progress_ok else {}),
+                'achieved_model_height_change_mm':height*1000,
+                'final_errors_ticks':errors,'final_tolerance_ticks':FINAL_TOLERANCE,'trimmed_commands':trimmed,'leads':leads,'glitches':glitches,'plan':p,'states':states,'trace':trace,'torque':'left on',
                 'note':'A miss is reported, not retried. Preview a lift next; the planner decides whether this pose is usable. Operator confirms clearance.'}
     except BaseException as exc:
         evidence={m:stationary_timeout_evidence(recent[m],commands[m],stage) for m in attempted}
@@ -121,11 +161,11 @@ def execute(sdk,ph,pk,group,initial,p,observer,arm=LEFT):
                         if jc.read(sdk,ph,pk,int(mid),'torque')!=1:raise RuntimeError('Torque not on; not re-enabling')
                         pos=jc.read(sdk,ph,pk,int(mid),'position');lo,hi=group['joints'][mid]['safe_raw_limits'];a,b=p['expected_positions'][mid],START[mid]
                         if not lo<=pos<=hi or not min(a,b)-16<=pos<=max(a,b)+16:raise RuntimeError('Hold feedback outside the start-pose window')
-                        reach.packet(sdk,ph,pk,int(mid),pos);cleanup['holds'][mid]={'acknowledged':True,'target':pos}
+                        send(sdk,ph,pk,int(mid),pos);cleanup['holds'][mid]={'acknowledged':True,'target':pos}
                     except Exception as error:cleanup['holds'][mid]={'acknowledged':False,'error':str(error)}
             finally:
                 for sig,handler in old.items():signal.signal(sig,handler)
-        return {'completed':False,'error':str(exc) or type(exc).__name__,'plan':p,'trace':trace,'cleanup':cleanup,'note':'No automatic return, retry or torque release; keep arm supported.'}
+        return {'completed':False,'error':str(exc) or type(exc).__name__,'plan':p,'trace':trace,'leads':leads,'glitches':glitches,'cleanup':cleanup,'note':'No automatic return, retry or torque release; keep arm supported.'}
 
 
 def main(arm=LEFT):

@@ -2,6 +2,64 @@
 
 Tools for building and servicing an XLeRobot.
 
+## Grasp and basket skill (left SO101 arm)
+
+The robot picks a standing box off the desk and drops it into a basket, driven step by step through text prompts to
+an agent. Video: _add the GitHub Release / video link here_ (time-lapse, 40x).
+
+It works with the stereo camera on the robot's neck, without markers or a trained policy:
+
+1. **See:** a camera snapshot; [SlimSAM](https://huggingface.co/Zigeng/SlimSAM-uniform-50) outlines the object from
+   one or two clicks; stereo depth turns its pixels into 3D points in the arm's frame.
+2. **Choose a grasp:** [Contact-GraspNet](https://github.com/elchun/contact_graspnet_pytorch) (PyTorch, CPU)
+   proposes grasps; they are filtered to what the 5-joint SO101 can do (top-down, jaw line) and one near the object's
+   centre is chosen.
+3. **Plan:** inverse kinematics on the SO101 model turns it into a chain of short moves (at most 380 ticks per
+   joint each): approach, hover, descend, close and squeeze; then lift, carry, lower into the basket, open.
+4. **Act, one supervised step at a time:** each step goes through the robot's MCP server, which re-checks it, and a
+   camera check after each move compares where the object is with where the plan expects it (OK / CHECK / UNSEEN).
+
+| Path | What |
+|---|---|
+| [`xlerobot_mcp/`](xlerobot_mcp/) | MCP server and controllers: camera stream, neck, base, arm holding, reach (IK) and gripper tools, with safety gates. Its README starts with the current capabilities and the operating rules. |
+| [`grasp/`](grasp/) | The skill: perception (`sam_click.py`, `cgn_grasps.py`, `look.py`), planners (`plan_grasp.py`, `plan_basket.py`, `plan_ready.py`, `adjust.py`), the step runner `step.py`, offline tests. [`grasp/README.md`](grasp/README.md) is the runbook and lessons from each run. |
+| `reach_point.py` | Camera pixel to arm-frame point (stereo depth + camera-to-arm calibration); used by `grasp/`. |
+| `calibrate_stereo.py`, `extract_calib_frames.py`, `calibration/` | Fisheye stereo calibration from checkerboard frames. |
+| `handeye_calibrate.py` | Camera-to-arm calibration with an ArUco marker on the gripper. |
+| `SO101/` | SO101 URDF and meshes (from the [SO-ARM100](https://github.com/TheRobotStudio/SO-ARM100) project) used for IK. |
+
+**Setup.** Two conda envs: `lerobot` (LeRobot with Feetech support, plus `placo` and `scipy`) for the planners, and
+`contact_graspnet` (PyTorch, `transformers`, OpenCV, and a clone of contact_graspnet_pytorch with its checkpoint at
+`~/Documents/contact_graspnet_pytorch`, or set `CGN_ROOT`). The calibration results in `samples/calibration/` and
+`samples/hand_eye/` belong to this robot: recalibrate yours with the scripts above, and redo the camera-to-arm
+calibration whenever the camera mount moves. The camera-to-arm result is valid only with the neck at its
+calibration pose.
+
+**Run order** (from the repo root; details in [`grasp/README.md`](grasp/README.md)):
+
+```bash
+python grasp/step.py hold                     # warm up the camera, hold the neck and arm in place
+python grasp/step.py ready                    # arm to the ready pose, out of the camera's view
+$CGN grasp/look.py                            # snapshot
+$CGN grasp/sam_click.py FRAME.png --click U V --click U V
+$CGN grasp/cgn_grasps.py FRAME.png --mask samples/grasp/<frame>_mask.npy
+$LEROBOT grasp/plan_grasp.py samples/grasp/<frame>_grasps.json
+python grasp/step.py run samples/grasp/<frame>_grasp_plan.json --steps 1-5   # approach (one operator go per range)
+...                                           # open, descend, close, re-squeeze
+$LEROBOT grasp/plan_basket.py samples/grasp/<frame>_grasp_plan.json
+python grasp/step.py run samples/grasp/<frame>_basket_plan.json --steps 1-7  # lift, carry, check over the basket
+...                                           # lower, open, lift away, look into the basket
+```
+
+**Safety.** Every motion needs the operator's go; the server refuses moves outside joint limits, over 400 ticks per
+joint, or from a pose that differs from what the caller expects; release the arm's torque only while supporting it.
+Keep a hand on the power cutoff: a typed "stop" arrives too late for short moves.
+
+**Status (November 25, 2026).** Four supervised runs with a 13.6 cm juice box succeeded (November 23–25); the last two
+needed no position corrections. Known limits: a 15–20 mm grasp offset whose cause is unknown (corrected by a default
+offset), camera checks that cannot see the object while the arm hides it, the basket position given by hand, no
+collision checking against the scene, and only box-like objects so far.
+
 ## `servo_regs.py`
 
 A command-line utility to scan for, inspect, and edit the registers of Feetech

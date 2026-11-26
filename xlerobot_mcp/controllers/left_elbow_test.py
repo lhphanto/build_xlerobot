@@ -6,7 +6,9 @@ import left_arm_hold as ah
 from settle_timeout import StationarySettlingTimeout, stationary_timeout_evidence
 
 
-def validate(group, states, expected, delta=80):
+def validate(group, states, expected, delta=80, goal_tolerance=None):
+    # Gravity sag allowance per joint (holding goal minus position); elbow 16, others 8 unless a caller widens it.
+    goal_tolerance = {'3': 16, **(goal_tolerance or {})}
     if not group.get('port_verified') or set(expected) != set(map(str, ah.IDS)):
         raise ValueError('Verified left bus and six expected positions required')
     for mid, state in states.items():
@@ -16,7 +18,7 @@ def validate(group, states, expected, delta=80):
             raise ValueError('Calibration changed')
         if state['model'] != 777 or state['mode'] != 0 or state['torque'] != 1 or state['moving']:
             raise ValueError('All six joints must already be holding and stationary')
-        if not lo <= state['position'] <= hi or abs(state['goal']-state['position']) > (16 if mid == '3' else 8) or abs(state['position']-expected[mid]) > 4:
+        if not lo <= state['position'] <= hi or abs(state['goal']-state['position']) > goal_tolerance.get(mid, 8) or abs(state['position']-expected[mid]) > 4:
             raise ValueError('Pose changed, outside limits, or outstanding target')
         if mid == '3' and not lo <= state['goal'] <= hi:
             raise ValueError('ID3 existing goal outside saved limits')

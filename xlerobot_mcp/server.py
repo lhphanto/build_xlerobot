@@ -90,7 +90,7 @@ class Controller:
                         await asyncio.shield(task)
                     raise
                 result = {'mock': False, 'exit_code': self.active.returncode,
-                          'stdout': out.decode()[-128000:] if script in ('left_gripper_up.py','left_start_pose.py','right_start_pose.py','left_shoulder_up.py','right_gripper_up.py','right_elbow_p_test.py','right_arm_test.py','left_yaw_range_test.py','left_shoulder_range_test.py','left_elbow_range_test.py','left_wrist_range_test.py','left_roll_range_test.py','left_gripper_range_test.py') else out.decode()[-64000:] if script in ('left_elbow_test.py','left_elbow_bias_test.py','left_wrist_test.py','left_roll_test.py','left_gripper_test.py') else out.decode()[-16000:], 'stderr': err.decode()[-4000:]}
+                          'stdout': out.decode()[-128000:] if script in ('left_gripper_up.py','left_start_pose.py','left_reach.py','left_gripper_grip.py','right_start_pose.py','left_shoulder_up.py','right_gripper_up.py','right_elbow_p_test.py','right_arm_test.py','left_yaw_range_test.py','left_shoulder_range_test.py','left_elbow_range_test.py','left_wrist_range_test.py','left_roll_range_test.py','left_gripper_range_test.py') else out.decode()[-64000:] if script in ('left_elbow_test.py','left_elbow_bias_test.py','left_wrist_test.py','left_roll_test.py','left_gripper_test.py') else out.decode()[-16000:], 'stderr': err.decode()[-4000:]}
                 if self.active.returncode:
                     raise ValueError(json.dumps(result))
                 return result
@@ -150,13 +150,13 @@ def build_server(controller):
 
     @mcp.tool(annotations=READ)
     async def camera_snapshot() -> list[TextContent | ImageContent]:
-        """Capture fresh upright side-by-side camera image with 5-second warm-up. Robot must be stationary."""
+        """Fresh upright side-by-side camera image from the continuous camera stream (started on first use; the first snapshot waits about 30 s for exposure and white balance to settle, later ones are fast; the stream stops after 30 idle minutes). Robot must be stationary."""
         if controller.mock:
             return [TextContent(type='text',text='MOCK: no camera accessed; no image available.')]
         import tempfile
         with tempfile.TemporaryDirectory(prefix='xlerobot-frame-') as directory:
             path=Path(directory)/'frame.png'
-            result=await controller.run('camera_capture.py',['--output',str(path)],timeout=55)
+            result=await controller.run('camera_capture.py',['--output',str(path)],timeout=100)
             return [TextContent(type='text',text=json.dumps(result)),
                     ImageContent(type='image',mimeType='image/png',data=base64.b64encode(path.read_bytes()).decode())]
 
@@ -326,6 +326,27 @@ def build_server(controller):
         return await controller.run('left_gripper_range_test.py',['--expected-positions',json.dumps(expected_positions)],True,request_id,timeout=30)
 
     @mcp.tool(annotations=WRITE)
+    async def left_gripper_open(expected_positions: dict[str,int], target: int, request_id: str) -> dict:
+        """Open the left gripper (ID6) to raw target: must be above the current position (positive ticks open), at most 700 ticks (~61 degrees) away, within saved limits. Speed 30; fails and holds where it stopped if blocked. All six joints already holding; other joints watched (stop if any moves >8 ticks). Leaves torque on."""
+        if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
+        if type(target) is not int or not 0<=target<=4095:raise ValueError('Integer raw target required')
+        return await controller.run('left_gripper_grip.py',['open','--expected-positions',json.dumps(expected_positions),'--target',str(target)],True,request_id,timeout=30)
+
+    @mcp.tool(annotations=WRITE)
+    async def left_gripper_close(expected_positions: dict[str,int], request_id: str, squeeze: int = 12) -> dict:
+        """Close the left gripper (ID6) in 16-tick steps at speed 30 until it stalls or present load reaches 300, then hold squeeze ticks (0-24, default 12) past the contact point; stops 8 ticks before the closed limit if nothing is gripped. Grip force comes only from that bounded offset. All six already holding; other joints watched. Operator supervising, fingers clear of the jaws. Release with left_gripper_open."""
+        if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
+        if type(squeeze) is not int or not 0<=squeeze<=24:raise ValueError('Squeeze must be 0-24 ticks')
+        return await controller.run('left_gripper_grip.py',['close','--expected-positions',json.dumps(expected_positions),'--squeeze',str(squeeze)],True,request_id,timeout=120)
+
+    @mcp.tool(annotations=WRITE)
+    async def left_gripper_tighten(expected_positions: dict[str,int], request_id: str, ticks: int = 2) -> dict:
+        """One supervised direct ID6 target 1-4 ticks farther closed (default2), after the operator visually confirms both jaws touch the object. No contact-search step, lift or other-joint writes. All six stationary and holding; existing gripper goal error<=2. Refuses initially loaded gripper (raw load>=150); monitors load<150, power, position window and other-joint drift. Failure holds at feedback without retry. Tick offset is not millimeters or calibrated force and cannot guarantee no crushing. Leaves torque on; fingers clear."""
+        if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
+        if type(ticks) is not int or not 1<=ticks<=4:raise ValueError('Tighten must be 1-4 ticks')
+        return await controller.run('left_gripper_grip.py',['tighten','--expected-positions',json.dumps(expected_positions),'--squeeze',str(ticks)],True,request_id,timeout=12)
+
+    @mcp.tool(annotations=WRITE)
     async def test_right_shoulder(expected_positions: dict[str,int], request_id: str) -> dict:
         """One supervised right-arm ID2 test: +32 ticks, monitored 2s pause, return. All six already holding; empty arm supported, fingers clear. Mapping/direction unverified. Four-tick settling tolerance; no saved range changes. ID5 travel requires approved software limits."""
         if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):
@@ -466,6 +487,29 @@ def build_server(controller):
         if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
         if len(plan_hash)!=64 or any(c not in '0123456789abcdef' for c in plan_hash):raise ValueError('Valid preview hash required')
         return await controller.run('left_start_pose.py',['execute','--expected-positions',json.dumps(expected_positions),'--plan-hash',plan_hash],True,request_id,timeout=45)
+
+    def reach_pointing_args(level_jaws,top_down,jaw_yaw_deg,approach_tilt_deg):
+        if level_jaws and top_down:raise ValueError('Choose level_jaws or top_down, not both')
+        if not top_down and (jaw_yaw_deg is not None or approach_tilt_deg):raise ValueError('jaw_yaw_deg and approach_tilt_deg need top_down')
+        if jaw_yaw_deg is not None and not math.isfinite(jaw_yaw_deg):raise ValueError('jaw_yaw_deg must be finite')
+        if not 0<=approach_tilt_deg<=90:raise ValueError('approach_tilt_deg must be 0-90')
+        return [*(['--level-jaws'] if level_jaws else []),*(['--top-down','--approach-tilt-deg',str(float(approach_tilt_deg))] if top_down else []),
+                *(['--jaw-yaw-deg',str(float(jaw_yaw_deg))] if jaw_yaw_deg is not None else [])]
+
+    @mcp.tool(annotations=READ)
+    async def preview_left_reach(expected_positions: dict[str,int], target_m: list[float], level_jaws: bool = False, top_down: bool = False, jaw_yaw_deg: float | None = None, approach_tilt_deg: float = 0.0) -> dict:
+        """Read-only plan to move the left gripper frame to target_m = [x, y, z] meters in the left arm base frame (x forward, y left, z up). Position-only IK on IDs1-4 within 5 mm; level_jaws also turns wrist roll (ID5) so the jaw line is within 2 degrees of horizontal; top_down instead solves IDs1-5 so the gripper approach points straight down, or leans approach_tilt_deg (0-90; 90 = horizontal outward) away from the arm base, within 3 degrees, with the jaw-closing line at jaw_yaw_deg (arm frame, about z; either jaw order) if given, and keeps a descent between two pointing poses pointing; a reorientation needing over 400 ticks is refused (step through larger tilts); workspace x0.08-0.45, y-0.30-0.30, z-0.10-0.45; at most 400 ticks per joint, 16 per stage; refuses a path that sags more than 2 cm below its lower end. All six must already be holding. No writes."""
+        if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
+        if len(target_m)!=3 or not all(math.isfinite(v) for v in target_m):raise ValueError('target_m must be three finite numbers')
+        return await controller.run('left_reach.py',['preview','--expected-positions',json.dumps(expected_positions),'--target',*map(str,target_m),*reach_pointing_args(level_jaws,top_down,jaw_yaw_deg,approach_tilt_deg)],timeout=60)
+
+    @mcp.tool(annotations=WRITE)
+    async def move_left_reach(expected_positions: dict[str,int], target_m: list[float], plan_hash: str, request_id: str, level_jaws: bool = False, top_down: bool = False, jaw_yaw_deg: float | None = None, approach_tilt_deg: float = 0.0) -> dict:
+        """One supervised left-arm reach to a previewed point, then hold. IDs1-4 (plus ID5 with level_jaws or top_down; same options as the preview) at speed30 in stages of at most16 ticks; same target and plan_hash as the preview. Live checks: tracking, stillness, power, untouched joints, modeled gripper inside the planned envelope plus 3 cm. One bounded sag correction at the end; final within 8 ticks or reported as failed; holds on failure without retry or return. Empty arm, operator watching the whole path with cutoff available. No PID/EEPROM/limit changes; leaves torque on."""
+        if set(expected_positions)!=set(map(str,range(1,7))) or any(type(v) is not int or not 0<=v<=4095 for v in expected_positions.values()):raise ValueError('All6 fresh integer positions required')
+        if len(target_m)!=3 or not all(math.isfinite(v) for v in target_m):raise ValueError('target_m must be three finite numbers')
+        if len(plan_hash)!=64 or any(c not in '0123456789abcdef' for c in plan_hash):raise ValueError('Valid preview hash required')
+        return await controller.run('left_reach.py',['execute','--expected-positions',json.dumps(expected_positions),'--target',*map(str,target_m),'--plan-hash',plan_hash,*reach_pointing_args(level_jaws,top_down,jaw_yaw_deg,approach_tilt_deg)],True,request_id,timeout=90)
 
     @mcp.tool(annotations=READ)
     async def preview_right_start_pose(expected_positions: dict[str,int]) -> dict:

@@ -58,7 +58,7 @@ async def integration():
                     async with ClientSession(read,write) as session:
                         await session.initialize()
                         names={t.name for t in (await session.list_tools()).tools}
-                        assert names=={'preview_left_gripper_up','move_left_gripper_up','preview_left_start_pose','move_left_start_pose','preview_right_start_pose','move_right_start_pose','move_left_shoulder_up','preview_right_gripper_up','move_right_gripper_up','base_motion_state','base_status','robot_info','joint_status','camera_snapshot','move_base','nudge_joint','test_neck_pan','test_neck_joint','pan_torque','neck_hold','left_arm_hold','right_arm_hold', 'test_left_yaw','test_right_yaw','test_right_elbow_p','set_right_elbow_p','test_right_shoulder','test_right_elbow','test_right_wrist','test_right_roll','test_right_gripper','test_right_yaw_range','test_right_shoulder_range','test_right_elbow_range','test_right_wrist_range','test_right_roll_range','test_right_gripper_range', 'test_left_shoulder','test_left_elbow','test_left_elbow_bias','test_left_wrist','test_left_roll','test_left_gripper','test_left_yaw_range','test_left_shoulder_range','test_left_elbow_range','test_left_wrist_range','test_left_roll_range','test_left_gripper_range','stop_active','stop_base'},names
+                        assert names=={'preview_left_gripper_up','move_left_gripper_up','preview_left_start_pose','move_left_start_pose','preview_left_reach','move_left_reach','left_gripper_open','left_gripper_close','left_gripper_tighten','preview_right_start_pose','move_right_start_pose','move_left_shoulder_up','preview_right_gripper_up','move_right_gripper_up','base_motion_state','base_status','robot_info','joint_status','camera_snapshot','move_base','nudge_joint','test_neck_pan','test_neck_joint','pan_torque','neck_hold','left_arm_hold','right_arm_hold', 'test_left_yaw','test_right_yaw','test_right_elbow_p','set_right_elbow_p','test_right_shoulder','test_right_elbow','test_right_wrist','test_right_roll','test_right_gripper','test_right_yaw_range','test_right_shoulder_range','test_right_elbow_range','test_right_wrist_range','test_right_roll_range','test_right_gripper_range', 'test_left_shoulder','test_left_elbow','test_left_elbow_bias','test_left_wrist','test_left_roll','test_left_gripper','test_left_yaw_range','test_left_shoulder_range','test_left_elbow_range','test_left_wrist_range','test_left_roll_range','test_left_gripper_range','stop_active','stop_base'},names
                         assert not (await session.call_tool('robot_info',{})).isError
                         result=await session.call_tool('move_base',{'direction':'forward','seconds':9,'request_id':'44444444-4444-4444-8444-444444444444'})
                         assert result.isError
@@ -189,6 +189,36 @@ async def integration():
                         assert not result.isError
                         forwarded=json.loads(result.content[0].text)['arguments']
                         assert forwarded[forwarded.index('--wrist-bias-ticks')+1]=='5'
+                        result=await session.call_tool('preview_left_reach',{'expected_positions':left_positions,'target_m':[0.3,0.0,0.2]})
+                        assert not result.isError and json.loads(result.content[0].text)['arguments'][-3:]==['0.3','0.0','0.2']
+                        assert (await session.call_tool('preview_left_reach',{'expected_positions':left_positions,'target_m':[0.3,0.0]})).isError
+                        reach_move={'expected_positions':left_positions,'target_m':[0.3,0.0,0.2],'plan_hash':'e'*64,'request_id':str(uuid.uuid4())}
+                        assert not (await session.call_tool('move_left_reach',reach_move)).isError
+                        assert (await session.call_tool('move_left_reach',reach_move)).isError
+                        assert (await session.call_tool('move_left_reach',{**reach_move,'plan_hash':'bad','request_id':str(uuid.uuid4())})).isError
+                        result=await session.call_tool('preview_left_reach',{'expected_positions':left_positions,'target_m':[0.3,0.0,0.2],'level_jaws':True})
+                        assert not result.isError and json.loads(result.content[0].text)['arguments'][-1]=='--level-jaws'
+                        result=await session.call_tool('preview_left_reach',{'expected_positions':left_positions,'target_m':[0.286,-0.127,0.023],'top_down':True,'jaw_yaw_deg':62,'approach_tilt_deg':15})
+                        assert not result.isError and json.loads(result.content[0].text)['arguments'][-5:]==['--top-down','--approach-tilt-deg','15.0','--jaw-yaw-deg','62.0']
+                        result=await session.call_tool('move_left_reach',{**reach_move,'top_down':True,'request_id':str(uuid.uuid4())})
+                        assert not result.isError and json.loads(result.content[0].text)['arguments'][-3:]==['--top-down','--approach-tilt-deg','0.0']
+                        for bad in ({'top_down':True,'level_jaws':True},{'jaw_yaw_deg':62},{'approach_tilt_deg':15},{'top_down':True,'approach_tilt_deg':95}):
+                            assert (await session.call_tool('preview_left_reach',{'expected_positions':left_positions,'target_m':[0.3,0.0,0.2],**bad})).isError
+                        result=await session.call_tool('left_gripper_open',{'expected_positions':left_positions,'target':2100,'request_id':str(uuid.uuid4())})
+                        assert not result.isError and json.loads(result.content[0].text)['arguments'][-2:]==['--target','2100']
+                        assert (await session.call_tool('left_gripper_open',{'expected_positions':left_positions,'target':5000,'request_id':str(uuid.uuid4())})).isError
+                        result=await session.call_tool('left_gripper_close',{'expected_positions':left_positions,'squeeze':8,'request_id':str(uuid.uuid4())})
+                        assert not result.isError and json.loads(result.content[0].text)['arguments'][-2:]==['--squeeze','8']
+                        assert (await session.call_tool('left_gripper_close',{'expected_positions':left_positions,'squeeze':40,'request_id':str(uuid.uuid4())})).isError
+                        tight_id=str(uuid.uuid4())
+                        result=await session.call_tool('left_gripper_tighten',{'expected_positions':left_positions,'ticks':2,'request_id':tight_id})
+                        assert not result.isError,result
+                        payload=json.loads(result.content[0].text)
+                        assert payload['script']=='left_gripper_grip.py' and payload['arguments'][0]=='tighten',payload
+                        assert payload['arguments'][-2:]==['--squeeze','2'],payload
+                        assert (await session.call_tool('left_gripper_tighten',{'expected_positions':left_positions,'ticks':2,'request_id':tight_id})).isError
+                        for bad in (0,5,-1):
+                            assert (await session.call_tool('left_gripper_tighten',{'expected_positions':left_positions,'ticks':bad,'request_id':str(uuid.uuid4())})).isError
                         right_positions={str(m):1900 for m in range(1,7)}
                         result=await session.call_tool('preview_right_start_pose',{'expected_positions':right_positions})
                         assert not result.isError and json.loads(result.content[0].text)['script']=='right_start_pose.py'
@@ -285,7 +315,7 @@ async def integration():
 
                         assert not (await session.call_tool('camera_snapshot',{})).isError
                         assert not (await session.call_tool('stop_active',{})).isError
-            print('PASS: real HTTP MCP handshake, 44 tools, bearer auth, browser-origin rejection, bounds, replay, mock capture/stop')
+            print(f'PASS: real HTTP MCP handshake, {len(names)} tools, bearer auth, browser-origin rejection, bounds, replay, mock capture/stop')
         finally:
             p.terminate(); p.wait(timeout=10)
 

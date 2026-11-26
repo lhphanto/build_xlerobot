@@ -883,7 +883,7 @@
           "commissioned": true,
           "safe_raw_limits": [
             1959,
-            2120
+            2356
           ],
           "observed_raw_limits": [
             874,
@@ -905,7 +905,7 @@
             "moving": 0
           },
           "fault_bits": [],
-          "limits_source": "Conservative limits inside measured commissioning endpoints with8-tick margin; supervised stationary-base neck operation only.",
+          "limits_source": "Conservative limits inside measured commissioning endpoints with8-tick margin; supervised stationary-base neck operation only. November16, 2026: upper limit raised from 2120 to 2295 after a supervised tilt-down test (2116 to 2286 in four steps) with operator watching camera, cable and head clearance; 2286 is the working pose for camera-to-arm calibration. November24, 2026: upper limit raised from 2295 to 2356 after a supervised tilt-down test (2289 to 2348 in two steps) with the operator checking camera, cable and head clearance and the snapshots; 2350 is the basket view pose (visual only; depth needs the 2287 calibration pose).",
           "commissioning_results": {
             "trials_completed": 3,
             "moves": [
@@ -1161,21 +1161,25 @@
   },
   "neck_test_session": {
     "enabled": false,
-    "expires_unix": 1791609271.376205,
-    "scope": "User approved one91-tick tilt-down and return trial while observing; two tilt moves only.",
+    "expires_unix": 1795569702.825641,
+    "scope": "User approved on 2026-11-24 (\"go tilt test\"): find how far tilt (ID8) can look down to see into the basket; tilt only, steps of about 30 ticks from 2289, operator checks each snapshot and the camera, cable and head clearance. Saved limits unchanged unless the operator approves a new one.",
     "joints": {
       "7": {
-        "center_raw": 1995,
-        "radius_raw": 91,
+        "center_raw": 2012,
+        "radius_raw": 8,
         "remaining_moves": 0
       },
       "8": {
-        "center_raw": 2042,
+        "center_raw": 2380,
         "radius_raw": 91,
-        "remaining_moves": 0
+        "remaining_moves": 3
       }
     },
-    "stopped_reason": "Approved larger tilt down-and-return completed; awaiting operator observation/reference."
+    "previous_session": {
+      "scope": "User approved on 2026-11-16: widen tilt-down view for camera-to-arm calibration; tilt only, steps of about 32 ticks while observing camera, cable and head clearance.",
+      "stopped_reason": "Operator stopped at tilt 2286 on 2026-11-16; new upper operating limit 2295 saved. Session closed."
+    },
+    "stopped_reason": "Operator stopped at tilt 2348 on 2026-11-24 (\"I think it is enough\"): basket rim visible from 2318; steps 2289->2318->2348, no faults, 31 C; returned to 2291. New upper operating limit 2356 saved. Session closed."
   },
   "neck_reference_pose_candidate": {
     "7": 1995,
